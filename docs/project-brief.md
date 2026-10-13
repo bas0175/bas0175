@@ -34,6 +34,7 @@ Context for anyone (or any session) working on the game. The game-specific hando
 - Open to any art approach that fits the aesthetic and narrative.
 
 ## Direction (October 2026)
-- Testing 2.5D: real 3D cave rendered with Three.js, side-on platforming unchanged, characters as 2D sprites in the 3D world. Rule: depth is scenery, never gameplay, so the game can collapse back to 2D.
+- 2.5D confirmed (13 October 2026) after the great chamber test (`game25d/`, build in `builds/`). Visual tweaks to follow.
+- 2.5D: real 3D cave rendered with Three.js, side-on platforming unchanged, characters as 2D sprites in the 3D world. Rule: depth is scenery, never gameplay, so the game can collapse back to 2D.
 - All sounds must be swappable, so Piece I recordings can replace the synthesized placeholders.
 - v31 is preserved untouched in `v31/`.
