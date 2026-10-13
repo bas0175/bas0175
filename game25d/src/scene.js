@@ -68,7 +68,12 @@ export function buildScene(renderer, W, H) {
   // One sheet swept along x: floor from the camera side to the back, up the back wall, over the roof.
   {
     const xs = []; for (let x = X0; x <= X1; x += 14) xs.push(x);
-    [CHASM.a - 2, CHASM.a + 2, CHASM.b - 2, CHASM.b + 2].forEach(x => xs.push(x)); xs.sort((a, b) => a - b);
+    for (let x = CHASM.a - 80; x <= CHASM.b + 80; x += 5) xs.push(x);   // finer around the chasm so its lips can be jagged
+    xs.sort((a, b) => a - b);
+    // the chasm's lips wander with depth; along the strip she runs on they stay close to the collision edges
+    const lipW = z => .12 + .88 * smooth(30, 160, Math.abs(z - 10));
+    const lipA = z => CHASM.a + N(z * .011, 3.1, 7.7) * 70 * lipW(z) + N(z * .05, 1.3, 2.2) * 14 * lipW(z);
+    const lipB = z => CHASM.b + N(z * .011, 9.4, 1.9) * 70 * lipW(z) + N(z * .05, 4.6, 8.1) * 14 * lipW(z);
     const ROWS = 90, pos = [], col = [], uv = [], idx = [];
     const prof = x => {
       const D = caveD(x), Hh = caveH(x), F = 520;
@@ -78,7 +83,7 @@ export function buildScene(renderer, W, H) {
     };
     const tmpN = new THREE.Vector2();
     xs.forEach((x, i) => {
-      const P = prof(x), inChasm = x > CHASM.a && x < CHASM.b;
+      const P = prof(x);
       let acc = 0;
       for (let j = 0; j < ROWS; j++) {
         const p = P[j], q = P[Math.min(ROWS - 1, j + 1)], o = P[Math.max(0, j - 1)];
@@ -89,13 +94,18 @@ export function buildScene(renderer, W, H) {
         const amp = isFloor ? 26 * strip : lerp(90, 60, p.y / caveH(x));
         let d = N.fbm(x * .0035, p.y * .004, p.z * .004, 5) * amp * 2 + (isFloor ? 0 : Math.abs(N(x * .011, p.y * .011, p.z * .011)) * -40);
         let y = p.y + tmpN.y * d, z = p.z + tmpN.x * d;
-        if (isFloor && inChasm) y = -1100;
-        if (isFloor && !inChasm) y = Math.max(isFloor ? y : y, -40);
+        let depth = 0;
+        if (isFloor) {
+          const dIn = Math.min(x - lipA(z), lipB(z) - x);   // how far inside the chasm this point is
+          if (dIn > 0) { depth = Math.min(1400, dIn * 7 + dIn * dIn * .09); y = -depth + N(x * .03, z * .03, depth * .01) * 40 * smooth(0, 25, dIn); z += N(x * .02, depth * .01, 5) * 30 * smooth(0, 40, dIn); }
+          else if (dIn > -28) y -= (1 + dIn / 28) * 14 * Math.abs(N(x * .08, z * .08, 1));   // a crumbling lip
+          else y = Math.max(y, -40);
+        }
         if (j > 0) acc += Math.hypot(P[j].y - P[j - 1].y, P[j].z - P[j - 1].z);
         pos.push(x, y, z); uv.push(x / 240, acc / 240);
         const shade = .55 + .45 * clamp(.5 + N.fbm(x * .002 + 50, p.y * .002, p.z * .002, 3), 0, 1);
         const c = new THREE.Color().setRGB(.16 * shade, .205 * shade, .25 * shade);
-        if (isFloor) c.multiplyScalar(.82);
+        if (isFloor) c.multiplyScalar(.82 * Math.exp(-depth / 380));
         col.push(c.r, c.g, c.b);
       }
     });
@@ -122,6 +132,22 @@ export function buildScene(renderer, W, H) {
     const ll = new THREE.PointLight(0xffb070, 3000, 420, 1.4); ll.position.set(WALL.x + WALL.w + 40, 540, -40); scene.add(ll);
   }
 
+  // ---------- the chasm: cold mist rising from far below, a faint light at the bottom ----------
+  {
+    const n = 260, pos = new Float32Array(n * 3), ph = new Float32Array(n * 4);
+    for (let i = 0; i < n; i++) { pos.set([CHASM.a + 15 + R() * (CHASM.b - CHASM.a - 30), R(), 420 - R() * 820], i * 3); ph.set([R() * 6, .02 + R() * .04, 10 + R() * 22, .5 + R() * .5], i * 4); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aPh', new THREE.BufferAttribute(ph, 4));
+    const mat = glowShader(
+      `attribute vec4 aPh;varying float vA;
+       void main(){float u=fract(position.y+uTime*aPh.y);vec4 wp=modelMatrix*vec4(position.x+sin(uTime*0.3+aPh.x)*20.0,-620.0+u*640.0,position.z,1.0);
+       vA=aPh.w*smoothstep(0.0,0.35,u)*smoothstep(1.0,0.7,u);vec4 mvPosition=viewMatrix*wp;gl_Position=projectionMatrix*mvPosition;
+       gl_PointSize=aPh.z*2.0*projectionMatrix[1][1]*uVH*0.5/(-mvPosition.z);\n#include <fog_vertex>\n}`,
+      `varying float vA;void main(){float a=smoothstep(0.5,0.0,length(gl_PointCoord-0.5));gl_FragColor=vec4(vec3(0.45,0.6,0.72)*a*a*vA*0.16,1.0);\n#include <fog_fragment>\n}`,
+      { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    glowMats.push(mat); const pts = new THREE.Points(g, mat); pts.frustumCulled = false; scene.add(pts);
+    const deep = new THREE.PointLight(0x7fb0d0, 900, 1000, 1.1); deep.position.set((CHASM.a + CHASM.b) / 2, -320, -60); scene.add(deep);
+  }
+
   // ---------- rocks: road obstacles, scattered boulders, stalagmites and stalactites ----------
   const rockMat = new THREE.MeshStandardMaterial({ color: 0x2a3640, roughness: .92, flatShading: true });
   function rock(w, h, d, seed) {
@@ -130,6 +156,7 @@ export function buildScene(renderer, W, H) {
     g.computeVertexNormals(); return new THREE.Mesh(g, rockMat);
   }
   SOLIDS.filter(s => s.h < 120).forEach((s, i) => { const m = rock(s.w * .6, s.h, 40, 30 + i); m.position.set(s.x + s.w / 2, 0, 0); scene.add(m); });
+  for (let i = 0; i < 9; i++) { const side = i % 2, z = (i < 5 ? -90 - R() * 300 : 110 + R() * 260), s = 10 + R() * 26, m = rock(s * 1.4, s * .8, s, 300 + i); m.position.set(side ? CHASM.b + 14 + R() * 50 : CHASM.a - 14 - R() * 50, -4, z); scene.add(m); }
   for (let i = 0; i < 60; i++) {
     const x = X0 + 300 + R() * (X1 - X0 - 400); if (x > CHASM.a - 60 && x < CHASM.b + 60) continue;
     const z = -150 - R() * (caveD(x) * .7), s = 20 + R() * 70, m = rock(s * (1 + R()), s * (.6 + R()), s, 100 + i); m.position.set(x, -5, z); scene.add(m);
@@ -167,14 +194,16 @@ export function buildScene(renderer, W, H) {
     // lathe UVs: x runs around the cap, y runs from the crown (top) to the centre underneath
     const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0d1a1c'); gr.addColorStop(.32, '#1d3b3c'); gr.addColorStop(.52, '#fff'); gr.addColorStop(.6, '#9aa'); gr.addColorStop(1, '#556'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
     g.fillStyle = 'rgba(0,0,0,.55)'; for (let x = 0; x < w; x += 4) g.fillRect(x, h * .58, 2, h * .42);       // gills underneath
-    g.fillStyle = '#fff'; for (let i = 0; i < 18; i++) { g.beginPath(); g.arc((i + .5) * w / 18, h * (.2 + (i % 3) * .06), 2.2, 0, Math.PI * 2); g.fill(); }   // the bright spots on the crown
+    const SR = mulberry32(31);   // a few irregular spots on the crown, not a regular ring
+    for (let i = 0; i < 11; i++) { const sx = SR() * w, sy = h * (.06 + SR() * .34), sr = 1 + SR() * 2.6; g.fillStyle = `rgba(255,255,255,${.35 + SR() * .4})`; g.beginPath(); g.ellipse(sx, sy, sr * (1.4 - sy / h), sr * .8, 0, 0, Math.PI * 2); g.fill(); }
   }, false);
+  gillTex.flipY = false;   // canvas top = the crown (lathe v = 0)
   const caps = [];
   function mushroom(c, z) {
     const grp = new THREE.Group(), hue = GROVE_COL[c.hue], r = c.r, tx = c.x + c.lean * c.h;
     const prof = [[0, r * .42], [r * .45, r * .39], [r * .78, r * .27], [r * .97, r * .07], [r, 0], [r * .9, -r * .07], [r * .55, -r * .1], [r * .12, -r * .05]].map(([a, b]) => new THREE.Vector2(a, b));
     const capMat = new THREE.MeshStandardMaterial({ color: 0x24454c, roughness: .55, emissive: hue.clone(), emissiveMap: gillTex, emissiveIntensity: 1 });
-    const cap = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), capMat); cap.position.set(tx, c.h, z); cap.rotation.z = -c.lean * .6; grp.add(cap);
+    const cap = new THREE.Mesh(new THREE.LatheGeometry(prof, 40), capMat); cap.position.set(tx, c.h, z); cap.rotation.y = c.ph; grp.add(cap);
     const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(c.x, -6, z), new THREE.Vector3(c.x + c.lean * c.h * .3, c.h * .5, z), new THREE.Vector3(tx, c.h + 2, z));
     const sr = Math.max(3, r * .09), stemMat = new THREE.MeshStandardMaterial({ color: 0x6f8487, roughness: .7, emissive: hue.clone(), emissiveIntensity: .05 });
     grp.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 16, sr, 10, false), stemMat));
@@ -245,9 +274,9 @@ export function buildScene(renderer, W, H) {
 
   // ---------- spores ----------
   {
-    const n = 900, pos = new Float32Array(n * 3), ph = new Float32Array(n * 4);
+    const n = 720, pos = new Float32Array(n * 3), ph = new Float32Array(n * 4);
     for (let i = 0; i < n; i++) {
-      const road = i > 700, d = road ? Math.pow(R(), 1.7) : 0, x = road ? HINT.a + (HINT.b - HINT.a) * d : GROVE.a + R() * (GROVE.b - GROVE.a);
+      const road = i > 560, d = road ? Math.pow(R(), 1.7) : 0, x = road ? HINT.a + (HINT.b - HINT.a) * d : GROVE.a + R() * (GROVE.b - GROVE.a);
       pos.set([x, R(), 200 - R() * caveD(x) * .95], i * 3);
       ph.set([R() * 6, .015 + R() * .045, 1 + R() * 2.2, road ? .25 + .75 * (1 - d) : 1], i * 4);
     }
