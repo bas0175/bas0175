@@ -18,3 +18,12 @@ npm install
 npm run build      # writes dist/pilgrimage-25d-chamber.html, one self-contained file
 ```
 `node shot.mjs <x> <name> [flat] [ringDelayMs]` takes a screenshot at a position; `node play.mjs` runs a scripted playthrough.
+
+## The rigged Veyra (test)
+`rig/build_veyra.py` builds a stand-in 3D Veyra in Blender (body, cloth-simulated poncho with the amber hem, bun), rigs and animates idle, run and jump at v31's timings, and renders each frame side-on twice: colour with soft occlusion and ink outlines, and camera-space normals so the game's lights shade her. `rig/pack.py` packs both into matching sheets (`assets/veyra-rig-*.png`, `veyra-rig.json`). In the game, **V** switches between the rig and the sprite sheet.
+```
+python3 -m venv bl && bl/bin/pip install bpy==5.2.2
+bl/bin/python rig/build_veyra.py /tmp/veyra     # about 2 minutes on CPU
+python3 rig/pack.py /tmp/veyra assets
+```
+A better model (for example one generated from the reference art) can replace the stand-in; the animation, render and packing steps stay the same.

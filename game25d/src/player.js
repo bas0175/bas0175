@@ -1,6 +1,7 @@
 // Veyra's movement and animation frame choice, ported from v31 (movePlayer, sheetFrame) without changes to the feel.
 import { RUN, JUMP, GRAV, TERM, SOLIDS, PLATS, GROUND } from './world.js';
 import SHEET from '../assets/veyra-sheet.json';
+import RIG from '../assets/veyra-rig.json';
 
 export const keys = { left: false, right: false, jump: false };
 export const input = { jumpQueued: false };
@@ -71,4 +72,21 @@ export function sheetFrame(p, t, dying) {
   if (p.idleI == null) { p.idleI = Math.floor(Math.random() * n); p.idleNext = t + 4.5 + Math.random(); }
   else if (t > p.idleNext) { p.idleI = Math.max(0, Math.min(n - 1, p.idleI + (Math.random() < .5 ? -1 : 1))); p.idleNext = t + 4.5 + Math.random(); }
   return M.idle[p.idleI];
+}
+
+// Frames for the rigged 3D Veyra (rendered side-on): idle 12, run 12 (one cycle = two footsteps), jump 7, land 3.
+export function rigFrame(p, t, dying) {
+  const M = RIG;
+  if (dying) return M.land[0];
+  if (!p.onGround) {
+    const tk = t - p.takeoffAt, v = p.vy;
+    const i = tk < .06 ? 0 : v < -500 ? 1 : v < -250 ? 2 : v < -40 ? 3 : v < 200 ? 4 : v < 520 ? 5 : 6;
+    return M.jump[i];
+  }
+  if (t - p.landAt < .07) return M.land[0];
+  if (t - p.landAt < .16) return M.land[1];
+  const sp = Math.abs(p.vx);
+  if (sp > 30) return M.run[Math.floor(p.walkT / (2 * STEP_T / 12)) % 12];
+  const n = M.idle.length, k = Math.floor(t * 8) % (2 * n - 2);   // breathe back and forth
+  return M.idle[k < n ? k : 2 * n - 2 - k];
 }

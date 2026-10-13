@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GROUND, GROVE, HINT, LIVES, SECTIONS, START_X, BELL, FRONT, WAVE_SPEED } from './world.js';
-import { player, keys, input, movePlayer, placeAt, sheetFrame } from './player.js';
+import { player, keys, input, movePlayer, placeAt, sheetFrame, rigFrame } from './player.js';
 import { A, PENTA, SOUND_EVENTS, loadSound, clearSound, testSound, eventForFile } from './audio.js';
 import { buildScene } from './scene.js';
 
@@ -11,7 +11,7 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
 const view = buildScene(renderer, 960, 540);
 
-const state = { mode: 'title', lives: LIVES, fade: 0, fadeTo: 0, flat: false, story: {}, caption: '', captionUntil: 0, dying: null, frame: null };
+const state = { mode: 'title', lives: LIVES, fade: 0, fadeTo: 0, flat: false, rig: true, story: {}, caption: '', captionUntil: 0, dying: null, frame: null };
 const LOG = [], T0 = performance.now();
 const nowS = () => (performance.now() - T0) / 1000;
 function log(event, params = {}) { LOG.push({ t: Math.round(performance.now() - T0), event, params }); }
@@ -73,8 +73,8 @@ function update(dt) {
   } else if (px > HINT.a && state.mode === 'play') { dripT -= dt; if (dripT < 0) { dripT = 1.5 + Math.random() * 4; A.fire('drip', { x: px + (Math.random() - .5) * 900 }); } }
   state.nearBell = nearBell();
   state.fade += (state.fadeTo - state.fade) * Math.min(1, dt * 4);
-  state.frame = sheetFrame(p, t, state.dying);
-  view.update(t, dt, { player: p, frame: state.frame, alpha: state.dying ? Math.max(0, 1 - (t - state.dying.t0) / .6) : 1, inGrove, nearBell: state.nearBell && state.mode === 'play', flat: state.flat, fade: state.fade });
+  state.frame = (state.rig ? rigFrame : sheetFrame)(p, t, state.dying);
+  view.update(t, dt, { player: p, frame: state.frame, alpha: state.dying ? Math.max(0, 1 - (t - state.dying.t0) / .6) : 1, inGrove, nearBell: state.nearBell && state.mode === 'play', flat: state.flat, rig: state.rig, fade: state.fade });
   const hint = state.mode !== 'play' ? '' : state.nearBell ? 'E  strike the bell' : px > START_X - 120 && !state.story.moved ? '←  walk west' : '';
   if (Math.abs(p.vx) > 30) state.story.moved = 1;
   $('hint').textContent = state.captionUntil > t ? state.caption : hint;
@@ -84,7 +84,7 @@ let last = performance.now();
 function frame(ts) {
   const dt = Math.min(.033, (ts - last) / 1000); last = ts;
   if (state.mode !== 'paused' && state.mode !== 'title') update(dt);
-  else if (state.mode === 'title') { state.frame = sheetFrame(player, nowS(), null); view.update(nowS(), dt, { player, frame: state.frame, alpha: 1, inGrove: false, nearBell: false, flat: state.flat, fade: 0 }); }
+  else if (state.mode === 'title') { state.frame = (state.rig ? rigFrame : sheetFrame)(player, nowS(), null); view.update(nowS(), dt, { player, frame: state.frame, alpha: 1, inGrove: false, nearBell: false, flat: state.flat, rig: state.rig, fade: 0 }); }
   view.render();
   requestAnimationFrame(frame);
 }
@@ -95,6 +95,7 @@ window.addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('input,select,textarea')) return;
   if (state.mode === 'title') { if (['Space', 'Enter', 'KeyE'].includes(e.code)) { e.preventDefault(); start(); } return; }
   if (e.code === 'KeyB') { toggleSounds(); return; }
+  if (e.code === 'KeyV') { state.rig = !state.rig; log('character', { rig: state.rig }); caption(state.rig ? 'Veyra: 3D rig' : 'Veyra: sprite sheet', 2); return; }
   if (e.code === 'KeyC') { state.flat = !state.flat; log('camera', { flat: state.flat }); caption(state.flat ? 'Flat view (as in 2D)' : 'Depth view', 2); return; }
   if (e.code === 'KeyN') { A.muted = !A.muted; A.setLevel(); return; }
   if (e.code === 'Escape') { if (!$('sounds').hidden) { toggleSounds(); return; } if (state.mode === 'play') { state.mode = 'paused'; $('pause').hidden = false; } else if (state.mode === 'paused') resume(); return; }

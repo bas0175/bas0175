@@ -9,6 +9,9 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GROUND, WALL, GROVE, HINT, CHASM, END, FRONT, BACK, BELL, WAVE_SPEED, SOLIDS, PLATS } from './world.js';
 import { mulberry32, makeNoise, smooth, lerp, clamp } from './util.js';
 import SHEET_URL from '../assets/veyra-sheet.png';
+import RIG_ALB_URL from '../assets/veyra-rig-albedo.png';
+import RIG_NRM_URL from '../assets/veyra-rig-normal.png';
+import RIG from '../assets/veyra-rig.json';
 
 const GROVE_COL = [new THREE.Color(120 / 255, 240 / 255, 214 / 255), new THREE.Color(190 / 255, 150 / 255, 255 / 255)];
 const AMBER = new THREE.Color(0xffb45a);
@@ -334,7 +337,12 @@ export function buildScene(renderer, W, H) {
     const mesh = new THREE.Mesh(g, mat); scene.add(mesh);
     const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: canvasTex(64, 64, (g2, w) => { const r = g2.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2); r.addColorStop(0, 'rgba(0,0,0,.75)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g2.fillStyle = r; g2.fillRect(0, 0, w, w); }), transparent: true, depthWrite: false }));
     shadow.rotation.x = -Math.PI / 2; scene.add(shadow);
-    Object.assign(veyra, { tex, mat, mesh, shadow });
+    // the rigged 3D Veyra, rendered to frames: colour plus normals, so the scene's lights shade her
+    const L = new THREE.TextureLoader(), alb = L.load(RIG_ALB_URL), nrm = L.load(RIG_NRM_URL);
+    alb.colorSpace = THREE.SRGBColorSpace; [alb, nrm].forEach(t => { t.anisotropy = 4; t.generateMipmaps = true; });
+    const rigMat = new THREE.MeshStandardMaterial({ map: alb, normalMap: nrm, alphaTest: .5, side: THREE.DoubleSide, roughness: .8, emissive: 0xffffff, emissiveMap: alb, emissiveIntensity: .2 });
+    const rigMesh = new THREE.Mesh(g, rigMat); scene.add(rigMesh);
+    Object.assign(veyra, { tex, mat, mesh, shadow, alb, nrm, rigMat, rigMesh });
   }
 
   // ---------- light ----------
@@ -372,12 +380,19 @@ export function buildScene(renderer, W, H) {
     scene.fog.near = dd + lerp(80, 200, cam.k); scene.fog.far = dd + lerp(1900, 2600, cam.k);
 
     // the sprite
-    const fr = s.frame; if (fr) {
+    const fr = s.frame; veyra.mesh.visible = !s.rig; veyra.rigMesh.visible = !!s.rig;
+    if (fr && s.rig) {
+      const [sx, sy, w, h, cx, fy] = fr, TW = RIG._.W, TH = RIG._.H, sc = 90 / (1.75 * RIG._.pxPerMetre);   // about the same height as the sprite
+      for (const t of [veyra.alb, veyra.nrm]) { t.repeat.set(w / TW, h / TH); t.offset.set(sx / TW, 1 - (sy + h) / TH); }
+      veyra.rigMesh.scale.set(w * sc * p.face, h * sc, 1);
+      veyra.rigMesh.position.set(px + (w / 2 - cx) * sc * p.face, feetY - (h - fy) * sc, 14);
+      veyra.rigMesh.visible = s.alpha > .02; veyra.rigMat.alphaTest = .5 + (1 - s.alpha) * .45;
+    } else if (fr) {
       const [sx, sy, w, h, cx] = fr, TW = 2000, TH = 689, sc = .5;
       veyra.tex.repeat.set(w / TW, h / TH); veyra.tex.offset.set(sx / TW, 1 - (sy + h) / TH);
       veyra.mesh.scale.set(w * sc * p.face, h * sc, 1);
       veyra.mesh.position.set(px + (w / 2 - cx) * sc * p.face, GROUND - (p.y + p.h) - 1, 14);
-      veyra.mat.opacity = 1; veyra.mesh.visible = s.alpha > .02; veyra.mat.alphaTest = .45 + (1 - s.alpha) * .5;
+      veyra.mesh.visible = s.alpha > .02; veyra.mat.alphaTest = .45 + (1 - s.alpha) * .5;
     }
     // her shadow on whatever is below
     let below = -1e9; for (const q of SOLIDS) if (px >= q.x && px <= q.x + q.w && q.y >= p.y + p.h - 4) below = Math.max(below, GROUND - q.y); for (const q of PLATS) if (px >= q.x && px <= q.x + q.w && q.y >= p.y + p.h - 4) below = Math.max(below, GROUND - q.y);
