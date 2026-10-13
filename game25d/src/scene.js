@@ -340,7 +340,7 @@ export function buildScene(renderer, W, H) {
     // the rigged 3D Veyra, rendered to frames: colour plus normals, so the scene's lights shade her
     const L = new THREE.TextureLoader(), alb = L.load(RIG_ALB_URL), nrm = L.load(RIG_NRM_URL);
     alb.colorSpace = THREE.SRGBColorSpace; [alb, nrm].forEach(t => { t.anisotropy = 4; t.generateMipmaps = true; });
-    const rigMat = new THREE.MeshStandardMaterial({ map: alb, normalMap: nrm, alphaTest: .5, side: THREE.DoubleSide, roughness: .8, emissive: 0xffffff, emissiveMap: alb, emissiveIntensity: .2 });
+    const rigMat = new THREE.MeshStandardMaterial({ map: alb, normalMap: nrm, alphaTest: .5, side: THREE.DoubleSide, roughness: .8, emissive: 0xffffff, emissiveMap: alb, emissiveIntensity: .38 });
     const rigMesh = new THREE.Mesh(g, rigMat); scene.add(rigMesh);
     Object.assign(veyra, { tex, mat, mesh, shadow, alb, nrm, rigMat, rigMesh });
   }
