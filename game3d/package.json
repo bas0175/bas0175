@@ -1,0 +1,8 @@
+{
+  "name": "pilgrimage-3d",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build.mjs" },
+  "dependencies": { "three": "0.185.0" },
+  "devDependencies": { "esbuild": "0.25.10", "playwright-core": "1.56.1" }
+}

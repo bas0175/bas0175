@@ -41,3 +41,6 @@ Context for anyone (or any session) working on the game. The game-specific hando
 
 ## Character art experiments (October 2026)
 - Tried a 3D-rigged Veyra rendered to 2D frames (`game25d/rig/`): first a stand-in built in Blender (cloth-simulated poncho), then the author's Meshy model (`rig/models/`), rigged with skirt bones for the fused poncho. The pipeline works; the result is "not quite working" yet. The author is brainstorming next steps. The v31 sprite sheet remains available (V in the chamber test).
+
+## Full conversion (October 2026)
+- `game3d/`: the whole of v31 in 3D space with the v31 2D characters (`builds/obsidian-cycle-iii-pilgrimage-3d.html`). v31's code runs unchanged apart from hooks; the 3D world is built from its level data. G toggles back to 2D.
