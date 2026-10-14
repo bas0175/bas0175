@@ -38,3 +38,6 @@ Context for anyone (or any session) working on the game. The game-specific hando
 - 2.5D: real 3D cave rendered with Three.js, side-on platforming unchanged, characters as 2D sprites in the 3D world. Rule: depth is scenery, never gameplay, so the game can collapse back to 2D.
 - All sounds must be swappable, so Piece I recordings can replace the synthesized placeholders.
 - v31 is preserved untouched in `v31/`.
+
+## Character art experiments (October 2026)
+- Tried a 3D-rigged Veyra rendered to 2D frames (`game25d/rig/`): first a stand-in built in Blender (cloth-simulated poncho), then the author's Meshy model (`rig/models/`), rigged with skirt bones for the fused poncho. The pipeline works; the result is "not quite working" yet. The author is brainstorming next steps. The v31 sprite sheet remains available (V in the chamber test).
