@@ -199,8 +199,9 @@ export function buildHorizontal(name, D, X) {
     const E = X.east, list = [], ins = [];
     // the outpost's dwelling wall, with arched doorways
     { // the wall itself: one slab with the doorways and a few small windows cut through it
-      const WIN = [[228, 40, 50], [430, 34, 44], [828, 40, 50], [1112, 34, 44]];   // x, width, height (sills at 250)
-      const wall = new THREE.Shape(); wall.moveTo(-200, 0); wall.lineTo(1200, 0); wall.lineTo(1200, 400); wall.lineTo(-200, 400); wall.closePath();
+      const WIN = [[228, 40, 50], [430, 34, 44], [828, 40, 50], [1010, 36, 46]];   // x, width, height (sills at 250)
+      const WX1 = 1130;   // the building ends short of the crevice (it opens at 1150)
+      const wall = new THREE.Shape(); wall.moveTo(-200, 0); wall.lineTo(WX1, 0); wall.lineTo(WX1, 400); wall.lineTo(-200, 400); wall.closePath();
       E.arches.forEach(([x, aw]) => { const hh = 110, top = hh + aw * .45, h = new THREE.Path(); h.moveTo(x, 0); h.lineTo(x + aw, 0); h.lineTo(x + aw, hh); h.quadraticCurveTo(x + aw, top, x + aw / 2, top); h.quadraticCurveTo(x, top, x, hh); h.closePath(); wall.holes.push(h); });
       WIN.forEach(([x, ww, wh]) => { const h = new THREE.Path(); h.moveTo(x, 250); h.lineTo(x + ww, 250); h.lineTo(x + ww, 250 + wh - ww / 2); h.quadraticCurveTo(x + ww, 250 + wh, x + ww / 2, 250 + wh); h.quadraticCurveTo(x, 250 + wh, x, 250 + wh - ww / 2); h.closePath(); wall.holes.push(h); });
       const wg = new THREE.ExtrudeGeometry(wall, { depth: 60, bevelEnabled: false, curveSegments: 10 }); wg.translate(0, 0, -230);

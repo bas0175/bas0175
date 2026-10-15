@@ -672,8 +672,8 @@ const uiCanvas=document.getElementById('ui'),uiCtx=uiCanvas.getContext('2d');   
 // The 3D view (World3D) draws the world behind this canvas; this canvas keeps the characters, props and interface. G switches back to v31's 2D drawing.
 const glCanvas=document.getElementById('gl'),glFg=document.getElementById('glfg');if(!(window.World3D&&World3D.init(glCanvas,glFg)))document.getElementById('errBox').hidden=false,document.getElementById('errBox').textContent='This game needs WebGL, which this browser has turned off or does not support. Try a current Chrome, Edge, Firefox or Safari with hardware acceleration on.';
 function load3D(name){if(!window.World3D||!World3D.ready())return;const D=name==='east'?EAST:WEST_DATA;World3D.load(name,D,name!=='east'?{}:{east:{altar:ALTAR,shelfX:SHELF_X,
-  arches:[[40,150],[700,110],[1000,120]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,bellZone:[1100+BX,1180+BX+1010],gateZone:[3900+RD,4520+RD],rubble:RUBBLE,halls:[[4690+RD,124,206],[5370+RD,146,226]],gallery:[5000+RD,150,250,96],stream:[560,1150],
-  lintels:[[1100,190],[DOOR1.x+DOOR1.w/2,DOOR1.y],[DOOR1W.x+DOOR1W.w/2,DOOR1W.y],[DOORG.x+DOORG.w/2,DOORG.y],[DOOR2.x+DOOR2.w/2,DOOR2.y]]}});}
+  arches:[[40,150],[700,110]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,bellZone:[1100+BX,1180+BX+1010],gateZone:[3900+RD,4520+RD],rubble:RUBBLE,halls:[[4690+RD,124,206],[5370+RD,146,226]],gallery:[5000+RD,150,250,96],stream:[560,1150],
+  lintels:[[DOOR1.x+DOOR1.w/2,DOOR1.y],[DOOR1W.x+DOOR1W.w/2,DOOR1W.y],[DOORG.x+DOORG.w/2,DOORG.y],[DOOR2.x+DOOR2.w/2,DOOR2.y]]}});}
 let SHK=null;
 function draw3D(t){
   const rs=t-(state.rumbleT||-99),shk=rs>0&&rs<7.5?Math.sin(Math.PI*rs/7.5)*(rs>1.4&&rs<5.6?3.2:1.2):0;
