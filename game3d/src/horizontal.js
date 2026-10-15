@@ -263,9 +263,9 @@ export function buildHorizontal(name, D, X) {
       w.updates.push(t => { fm.uniforms.uTime.value = t; });
       addLight(w, { kind: 'point', x: lip + 10, y: -40, z: 90, color: 0x9cc8dc, dist: 360, decay: 1.4, weight: .4, I: () => 220 });
     }
-    {   // its source: a fall from a cleft in the roof into a stone basin behind the path; the water runs under a
+    {   // its source: a fall from the dark of the roof into a stone basin behind the path; the water runs under a
         // slab where she walks and comes out as the stream. The fall stands behind her, so she passes in front of it.
-      const fx = a + 26, zf = -78, top = roof(fx) + 10;
+      const fx = a - 34, zf = -78, top = roof(fx) + 10;   // left of the shelf and its marks, so nothing crosses the fall
       const fm = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         vertexShader: 'varying vec2 vUv;varying vec3 vP;void main(){vUv=uv;vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
         fragmentShader: `varying vec2 vUv;varying vec3 vP;uniform float uTime;float h(float x){return fract(sin(x*91.3)*47453.1);}
@@ -274,7 +274,6 @@ export function buildHorizontal(name, D, X) {
           float foot=1.0+0.6*smoothstep(60.0,0.0,vP.y);float a=e*(0.08+0.4*streak*(0.5+0.5*h(col+7.0)))*foot;gl_FragColor=vec4(vec3(0.72,0.88,0.95)*a,1.0);}` });
       const fallG = new THREE.PlaneGeometry(30, top, 1, 24); fallG.translate(fx, top / 2, zf);
       G.add(new THREE.Mesh(fallG, fm)); const back = fallG.clone(); back.translate(0, 0, -8); back.scale(.8, 1, 1); back.translate(fx * .2, 0, 0); G.add(new THREE.Mesh(back, fm));
-      const cleft = rockGeo(46, 22, 40, 77, false); cleft.translate(fx, top - 6, zf - 4); G.add(new THREE.Mesh(cleft, darkRockMat));   // the lip it pours from
       // the basin: a stone rim around dark water, foam where the fall lands
       const rim = [], bx0 = fx - 46, bx1 = fx + 50, bz0 = zf - 34, bz1 = -6;
       const box = (w2, h2, d2, x, y, z) => { const g = worldUVBox(w2, h2, d2); g.translate(x, y, z); rim.push(g); };

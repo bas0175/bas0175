@@ -785,7 +785,7 @@ function ringGroveBell(how){const G=WEST_DATA.grove,B=G.bell,t=nowS();if(t-B.las
    A small glowing cat-like creature, blue and violet, that keeps her company in the deep ways' dark caves: it
    fades in as she enters one, trots a little ahead of her to light the way, floats over gaps, and fades as she
    leaves. It opens the cave darkness around itself and lights the 3D rock (World3D gets its place each frame). */
-const CAT_ON=true;
+const CAT_ON=false;   // parked: the concept stays, this form is off
 const cat={x:0,y:0,vis:0,face:1,walk:0,float:0,motes:[]};
 function catGround(x,feet){let best=null;for(const s of [...solids(),...PLATS])if(x>=s.x&&x<=s.x+s.w&&s.y>=feet-40&&s.y>CEIL+40&&(best===null||s.y<best))best=s.y;return best;}
 function updateCat(dt){
