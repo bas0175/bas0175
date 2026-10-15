@@ -87,7 +87,7 @@ export function buildHorizontal(name, D, X) {
   const mergeAdd = (list, mat, def) => { if (list.length) { const m = new THREE.Mesh(mergeSafe(list, def), mat); G.add(m); return m; } };
   // ledges: cut stone blocks
   {
-    const list = D.ledges.map((l, k) => loftRock(rectOutline(l.x, Y(l.y + l.h), l.w, l.h), -170, 32, { amp: 3, freq: .05, bevel: 9, seed: 40 + k, colTop: 0xffffff, colSide: 0xb4c2cc, colBottom: 0x55636d }));
+    const list = D.ledges.map((l, k) => loftRock(rectOutline(l.x, Y(l.y + l.h), l.w, l.h), -170, 6, { amp: 3, freq: .05, bevel: 6, seed: 40 + k, colTop: 0xffffff, colSide: 0xb4c2cc, colBottom: 0x55636d }));
     mergeAdd(list, cutStoneMat);
   }
   // pillars: old columns of stacked drums on the road, raw rock in the caves
@@ -95,12 +95,12 @@ export function buildHorizontal(name, D, X) {
     const cols = [], rocks = [];
     D.pillars.forEach((k, i) => {
       const r = mulberry32(4000 + i), top = Y(k.y), bot = -760, cx = k.x + k.w / 2;
-      if (caveK(cx) > .5) { rocks.push(loftRock(rectOutline(k.x, bot, k.w, top - bot), -150, 40, { amp: 9, bevel: 18, seed: 500 + i })); return; }
+      if (caveK(cx) > .5) { rocks.push(loftRock(rectOutline(k.x, bot, k.w, top - bot), -150, 6, { amp: 9, bevel: 7, seed: 500 + i })); return; }
       for (let y = top; y > bot;) {
         const dh = 40 + r() * 34, first = y === top;
         const g = new THREE.CylinderGeometry(k.w / 2 - (first ? 1 : r() * 2), k.w / 2 - r() * 2, first ? dh : dh - 1.5, 14, 1); g.rotateY(r() * 6);
         if (first) { const p = g.attributes.position; for (let v = 0; v < p.count; v++) if (p.getY(v) > 0 && r() < .45) p.setY(v, p.getY(v) - 3 - r() * 8); g.computeVertexNormals(); }   // a broken top
-        g.translate(cx + (r() - .5) * 3, y - dh / 2, -10 + (r() - .5) * 4); cols.push(g); y -= dh;
+        g.translate(cx + (r() - .5) * 3, y - dh / 2, -k.w / 2 + 2); cols.push(g); y -= dh;
       }
     });
     mergeAdd(cols, masonryMat(1, 0xd4e0e8)); mergeAdd(rocks, caveRockMat, [.36, .43, .49]);
@@ -108,18 +108,18 @@ export function buildHorizontal(name, D, X) {
   // shelves jutting from the chasm walls
   {
     const list = D.plats.filter(q => !q.mush).map((q, k) => loftRock([{ x: q.x, y: Y(q.y), top: true }, { x: q.x + q.w, y: Y(q.y), top: true }, { x: q.x + q.w - 8, y: Y(q.y + 14) }, { x: q.x + q.w * .55, y: Y(q.y + 24) }, { x: q.x + 10, y: Y(q.y + 15) }],
-      -150, 30, { amp: 3.5, freq: .05, bevel: 8, step: 8, seed: 60 + k, colTop: 0xffffff, colSide: 0xb4c2cc, colBottom: 0x55636d }));
+      -150, 6, { amp: 3.5, freq: .05, bevel: 5, step: 8, seed: 60 + k, colTop: 0xffffff, colSide: 0xb4c2cc, colBottom: 0x55636d }));
     mergeAdd(list, cutStoneMat);
   }
   // boulders, rock slabs, stalagmites, low roofs, waystones
   {
     const rocks = [], dark = [];
-    D.rocks.forEach((k, i) => { const g = rockGeo(k.w * .55, k.h, 46, 30 + i); g.translate(k.x + k.w / 2, Y(k.y + k.h), 0); rocks.push(g); });
-    D.caverocks.forEach((k, i) => { const top = Y(k.y), bot = Y(k.y + k.h), out = rectOutline(k.x, bot, k.w, top - bot); rocks.push(loftRock(out, -200, 40, { amp: 10, bevel: 24, seed: 600 + i })); });
+    D.rocks.forEach((k, i) => { const g = rockGeo(k.w * .55, k.h, 46, 30 + i); g.translate(k.x + k.w / 2, Y(k.y + k.h), -40); rocks.push(g); });
+    D.caverocks.forEach((k, i) => { const top = Y(k.y), bot = Y(k.y + k.h), out = rectOutline(k.x, bot, k.w, top - bot); rocks.push(loftRock(out, -200, 6, { amp: 10, bevel: 8, seed: 600 + i })); });
     D.stalag.forEach((k, i) => { const pts = []; for (let j = 0; j <= 10; j++) { const u = j / 10; pts.push(new THREE.Vector2((k.w / 2 + 5) * Math.pow(1 - u, .8) * (1 + .1 * Math.sin(u * 9 + i)), u * k.h)); }
       const g = new THREE.LatheGeometry(pts, 10); g.translate(k.x + k.w / 2, Y(k.y + k.h), -4); rocks.push(g); });
     D.lowceil.forEach((k, i) => { const top = roof(k.x + k.w / 2) + 30, bot = Y(k.y + k.h), out = rectOutline(k.x - 20, bot, k.w + 40, top - bot).map(p => ({ ...p, top: false }));
-      dark.push(loftRock(out, -260, 60, { amp: 14, bevel: 30, seed: 700 + i, colTop: 0x3a4854, colSide: 0x3a4854, colBottom: 0x5a6c78 })); });
+      dark.push(loftRock(out, -260, 8, { amp: 14, bevel: 10, seed: 700 + i, colTop: 0x3a4854, colSide: 0x3a4854, colBottom: 0x5a6c78 })); });
     (D.waystones || []).forEach((ws, i) => [[0, 0, 22, 14], [3, -12, 16, 12], [6, -22, 10, 10]].forEach(([dx, dy, ww, hh], j) => { const g = rockGeo(ww / 2, hh, ww / 2, 800 + i * 3 + j, false); g.scale(1, .5, 1); g.translate(ws.x + dx, Y(GROUND + dy - hh / 2), -30); rocks.push(g); }));
     mergeAdd(rocks, caveRockMat, [.36, .43, .49]); mergeAdd(dark, caveRockMat, [.25, .3, .34]);
   }

@@ -31,7 +31,8 @@ export function buildGrove(w, D, X, { roof, depth }) {
     halo.position.set(tx, c.h - r * .05, z); halo.scale.set(r * 4.5, r * 3, 1); grp.add(halo);
     G.add(grp); const o = { c, x: tx, capMat, stemMat, halo, base }; capsList.push(o); return o;
   }
-  Gd.caps.filter(c => !c.back).forEach(c => { const o = mushroom(c, -4); addLight(w, { kind: 'point', x: o.x, y: c.h - 30, z: 110, color: COL[c.hue].getHex(), dist: 620, decay: 1.25, weight: 1.6, I: t => 900 * (.6 + .4 * Math.sin(t * .9 + c.ph)) + 1400 * boostAt(o.x, t, B) }); });
+  Gd.caps.filter(c => !c.back).forEach(c => { const o = mushroom(c, -c.r * .8);   // the cap's front rim on the play plane, so she stands on its edge from any angle
+ addLight(w, { kind: 'point', x: o.x, y: c.h - 30, z: 110, color: COL[c.hue].getHex(), dist: 620, decay: 1.25, weight: 1.6, I: t => 900 * (.6 + .4 * Math.sin(t * .9 + c.ph)) + 1400 * boostAt(o.x, t, B) }); });
   Gd.caps.filter(c => c.back).forEach((c, i) => mushroom({ ...c, h: c.h * 1.5, r: c.r * 1.5 }, -260 - (i % 4) * 150 - R() * 80, .6));
   [[Gd.a + 240, 400, 170, 0, -820], [Gd.a + 900, 470, 210, 0, -900], [Gd.b - 200, 360, 150, 1, -760]].forEach(([x, h, r, hue, z]) => mushroom({ x, h, r, lean: (R() - .5) * .15, hue, ph: R() * 6 }, z, .6));
   addLight(w, { kind: 'point', x: (Gd.a + Gd.b) / 2, y: 520, z: -300, color: 0x58d8c4, dist: 1800, decay: 1, weight: 3, I: t => 150 * (.7 + boostAt(B.x, t, B) * .4) });

@@ -51,7 +51,7 @@ export function buildVertical(name, S, kind) {
     const list = [];
     S.ledges.forEach((L, i) => {
       const out = [...L.top.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy), top: true })), ...L.bot.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy) }))];
-      list.push(loftRock(out, ZB, 44, { amp: 7, bevel: 16, step: 9, seed: 300 + i, colTop: 0xb6c6d0, colSide: 0x5c707e, colBottom: 0x222c34 }));
+      list.push(loftRock(out, ZB, 6, { amp: 7, bevel: 7, step: 9, seed: 300 + i, colTop: 0xb6c6d0, colSide: 0x5c707e, colBottom: 0x222c34 }));
     });
     G.add(new THREE.Mesh(mergeSafe(list), caveRockMat));
   }
