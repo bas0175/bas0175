@@ -50,8 +50,8 @@ export function buildVertical(name, S, kind) {
   {
     const list = [];
     S.ledges.forEach((L, i) => {
-      const out = [...L.top.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy), top: true })), ...L.bot.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy) }))];
-      list.push(loftRock(out, ZB, 6, { amp: 7, bevel: 7, step: 9, seed: 300 + i, colTop: 0xb6c6d0, colSide: 0x5c707e, colBottom: 0x222c34 }));
+      const out = [...L.top.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy), top: true })), ...L.bot.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy + 12 + 34 * Math.pow(Math.sin(Math.PI * clamp(dx / L.w, 0, 1)), .7)) }))];   // a rounded belly of rock under the ledge (scenery only)
+      list.push(loftRock(out, ZB, 6, { amp: 8, bevel: 40, corner: 14, step: 9, seed: 300 + i, colTop: 0xb6c6d0, colSide: 0x5c707e, colBottom: 0x222c34 }));
     });
     G.add(new THREE.Mesh(mergeSafe(list), caveRockMat));
   }

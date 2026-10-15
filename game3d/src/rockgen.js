@@ -13,35 +13,49 @@ export function loftRock(outline, z0, z1, o = {}) {
   const N = makeNoise(seed);
   let area = 0; for (let i = 0; i < outline.length; i++) { const a = outline[i], b = outline[(i + 1) % outline.length]; area += a.x * b.y - b.x * a.y; }
   if (area < 0) outline = outline.slice().reverse();   // make it counter-clockwise
-  // resample so long straight edges get vertices to roughen
-  const P = [];
+  // round every corner of the outline (radius limited by the edges either side)
+  const cr0 = o.corner ?? 16, src = [];
   for (let i = 0; i < outline.length; i++) {
-    const a = outline[i], b = outline[(i + 1) % outline.length], L = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.ceil(L / step));
+    const a = outline[(i - 1 + outline.length) % outline.length], v = outline[i], b = outline[(i + 1) % outline.length];
+    const la = Math.hypot(v.x - a.x, v.y - a.y), lb = Math.hypot(b.x - v.x, b.y - v.y), r = Math.min(cr0, la * .45, lb * .45);
+    if (r < 2) { src.push(v); continue; }
+    const pa = { x: v.x + (a.x - v.x) / la * r, y: v.y + (a.y - v.y) / la * r }, pb = { x: v.x + (b.x - v.x) / lb * r, y: v.y + (b.y - v.y) / lb * r };
+    for (let k = 0; k <= 4; k++) { const u = k / 4, x = (1 - u) * (1 - u) * pa.x + 2 * u * (1 - u) * v.x + u * u * pb.x, y = (1 - u) * (1 - u) * pa.y + 2 * u * (1 - u) * v.y + u * u * pb.y;
+      src.push({ x, y, top: (u < .5 ? a.top : b.top) && v.top }); }
+  }
+  // resample so long straight edges get vertices to shape
+  const P = [];
+  for (let i = 0; i < src.length; i++) {
+    const a = src[i], b = src[(i + 1) % src.length], L = Math.hypot(b.x - a.x, b.y - a.y), n = Math.max(1, Math.ceil(L / step));
     for (let k = 0; k < n; k++) { const u = k / n; P.push({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u, top: a.top && (b.top || u === 0) }); }
   }
   const M = P.length;
-  // outward 2D normals at each point
   const nrm = P.map((p, i) => {
     const a = P[(i - 1 + M) % M], b = P[(i + 1) % M], tx = b.x - a.x, ty = b.y - a.y, l = Math.hypot(tx, ty) || 1;
     return { x: ty / l, y: -tx / l };   // CCW outline: (ty, -tx) points outward
   });
   let minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9; for (const p of P) { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); }
-  const bev = Math.min(bevel, (maxX - minX) * .3, (maxY - minY) * .45, (z1 - z0) * .4);
-  // rings: straight section from the back, then a quarter-round over the front
-  const rings = [];
-  for (let z = z0; z < z1 - bev - 1; z += zStep) rings.push({ z, inset: 0 });
-  const NB = 5; for (let k = 0; k <= NB; k++) { const a = k / NB * Math.PI / 2; rings.push({ z: z1 - bev + bev * Math.sin(a), inset: bev * (1 - Math.cos(a)) }); }
+  const bev = Math.min(bevel, (maxX - minX) * .22, (maxY - minY) * .32, (z1 - z0) * .4);   // small enough that opposite sides never cross
+  // how far each point is (along the outline) from the walking surface: the top stays put, the rest rounds away from it
+  const arc = [0]; for (let i = 1; i <= M; i++) arc.push(arc[i - 1] + Math.hypot(P[i % M].x - P[i - 1].x, P[i % M].y - P[i - 1].y));
+  const total = arc[M], tops = P.map((p, i) => p.top ? i : -1).filter(i => i >= 0);
+  const fromTop = P.map((p, i) => tops.length ? Math.min(...tops.map(j => { const d = Math.abs(arc[i] - arc[j]); return Math.min(d, total - d); })) : 1e9);
+  const wRound = fromTop.map(d => smooth(0, bev * 1.4 + 1, d));
+  // rings from the back wall to the front: narrow at the back, full and slightly swollen in the middle, rounded off at the front
+  const NR = Math.max(9, Math.ceil((z1 - z0) / zStep)), rings = [];
+  for (let k = 0; k <= NR; k++) { const t = k / NR, e = Math.sin(Math.PI * (.08 + .92 * t)); rings.push({ t, z: z0 + (z1 - z0) * (1 - Math.pow(1 - t, 1.0)), prof: bev * (1 - Math.pow(Math.max(0, e), .6)) - bev * .14 * Math.pow(e, 4) }); }
   const pos = [], col = [], idx = [];
   const cTop = new THREE.Color(colTop), cSide = new THREE.Color(colSide), cBot = new THREE.Color(colBottom), tmp = new THREE.Color();
   for (const r of rings) for (let i = 0; i < M; i++) {
     const p = P[i], n = nrm[i];
-    let x = p.x - n.x * r.inset, y = p.y - n.y * r.inset, z = r.z;
+    const inset = p.top ? 3 * smooth(.85, 1, r.t) : r.prof * wRound[i];
+    let x = p.x - n.x * inset, y = p.y - n.y * inset, z = r.z;
     const f = N.fbm(x * freq, y * freq, z * freq, 4), g = N(x * freq * 3.1, y * freq * 3.1, z * freq * 3.1);
-    const d = (f * 1.6 + g * .4) * amp * (r.z <= z0 + 1 ? .3 : 1);
-    const flat = walk && p.top && z < z1 - bev;   // keep the walking surface level
-    x += n.x * d; y += flat ? Math.max(-1.2, Math.min(1.2, n.y * d * .15)) : n.y * d; z += r.inset > 0 ? d * .6 : 0;
+    const d = (f * 1.6 + g * .4) * amp * (r.t < .02 ? .3 : 1);
+    const flat = walk && p.top && r.t < .97;   // keep the walking surface level
+    x += n.x * d; y += flat ? Math.max(-1.2, Math.min(1.2, n.y * d * .15)) : n.y * d; z += d * .5 * Math.abs(r.t - .5) * 2;
     pos.push(x, y, z);
-    const up = n.y * (1 - r.inset / (bev || 1)) + (r.inset / (bev || 1)) * .2;
+    const up = p.top ? 1 : n.y * (1 - .5 * wRound[i] * Math.min(1, Math.abs(r.prof) / (bev || 1)));
     tmp.copy(cSide).lerp(up > 0 ? cTop : cBot, Math.min(1, Math.abs(up))).multiplyScalar(.82 + .3 * (f + .5));
     col.push(tmp.r, tmp.g, tmp.b);
   }
