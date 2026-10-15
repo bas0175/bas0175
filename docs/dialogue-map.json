@@ -1,0 +1,492 @@
+{
+ "C001": {
+  "kind": "C",
+  "who": "",
+  "text": "The living light restores you."
+ },
+ "D001": {
+  "kind": "D",
+  "who": "You",
+  "text": "So much is growing here. Light, and food. More than all of us could ever eat."
+ },
+ "D002": {
+  "kind": "D",
+  "who": "You",
+  "text": "This might save the community."
+ },
+ "C002": {
+  "kind": "C",
+  "who": "",
+  "text": "Three falls. You begin the descent again from the outpost door."
+ },
+ "C003": {
+  "kind": "C",
+  "who": "",
+  "text": "The deep ways go down before they go west. Walk to the end of each ledge and step down."
+ },
+ "C004": {
+  "kind": "C",
+  "who": "",
+  "text": "Back at the outpost door."
+ },
+ "C005": {
+  "kind": "C",
+  "who": "",
+  "text": "The deep ways. Keep west. Some ways end in stone; turn back and try another."
+ },
+ "C006": {
+  "kind": "C",
+  "who": "",
+  "text": "The way is walled. A shaft climbs into the dark. Jump for the ledges and pull yourself up."
+ },
+ "C007": {
+  "kind": "C",
+  "who": "",
+  "text": "Over the wall. The deep ways go on, west."
+ },
+ "D003": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Carry it carefully. Tell your father I asked after him."
+ },
+ "D004": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "You are from the outpost on the far road. Your father keeps it, yes?"
+ },
+ "D005": {
+  "kind": "D",
+  "who": "You",
+  "text": "He does. He sent me for the light."
+ },
+ "D006": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "And how does the outpost fare? The water, the stores?"
+ },
+ "D007": {
+  "kind": "D",
+  "who": "You",
+  "text": "The water runs well. The stores are thinning."
+ },
+ "D008": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "We will send what stores we can."
+ },
+ "D009": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "But I will be honest with you. The Assembly's own stores are beginning to run low as well."
+ },
+ "D010": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Go on. They are gathering for the rite."
+ },
+ "D011": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Back again. How is the outpost?"
+ },
+ "D012": {
+  "kind": "D",
+  "who": "You",
+  "text": "My father sends word: our stores are running low."
+ },
+ "D013": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "We will help however we can. But I need his counsel."
+ },
+ "D014": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Tell him the whole community is struggling for food now, not only the outposts. Ask him what he would do."
+ },
+ "D015": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Go on. They are waiting for you."
+ },
+ "D016": {
+  "kind": "D",
+  "who": "Father",
+  "text": "Go to the Assembly, and bring back the light for our household."
+ },
+ "D017": {
+  "kind": "D",
+  "who": "Father",
+  "text": "The road is long. Keep to the stone, and come home to us."
+ },
+ "D018": {
+  "kind": "D",
+  "who": "Father",
+  "text": "The light is failing again. Go to the Assembly, and bring back the light for our household."
+ },
+ "D019": {
+  "kind": "D",
+  "who": "Father",
+  "text": "And carry a message to Torven, at the Assembly: our stores are running low."
+ },
+ "D020": {
+  "kind": "D",
+  "who": "Father",
+  "text": "The stores are nearly gone. Go quickly, and bring back the light."
+ },
+ "D021": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "You came by the deep ways? No one has come that way in a generation."
+ },
+ "D022": {
+  "kind": "D",
+  "who": "You",
+  "text": "The cave on the road has fallen in. And our stores are nearly gone."
+ },
+ "D023": {
+  "kind": "D",
+  "who": "You",
+  "text": "But on the deep way, before the old shaft, there is a chamber full of living light. Growing things, more than anyone could eat."
+ },
+ "D024": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Growing? Down there?"
+ },
+ "D025": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Then you have saved us. All of us, Veyra."
+ },
+ "D026": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "We will send a party to clear your road, and another to that chamber. Stores will go back with you."
+ },
+ "D027": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Take your place in the rite. After today, everyone here will know your name."
+ },
+ "C008": {
+  "kind": "C",
+  "who": "",
+  "text": "Take your place in the rite."
+ },
+ "C009": {
+  "kind": "C",
+  "who": "",
+  "text": "Three falls. You begin the deep ways again from the foot of the long descent."
+ },
+ "C010": {
+  "kind": "C",
+  "who": "",
+  "text": "Three falls. You wake where you took the light."
+ },
+ "C011": {
+  "kind": "C",
+  "who": "",
+  "text": "Three falls. You begin again from the outpost."
+ },
+ "C012": {
+  "kind": "C",
+  "who": "",
+  "text": "Carry the light home. Far back on the road, a bell door has fallen shut."
+ },
+ "D028": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Veyra. The party will not have your road open before morning."
+ },
+ "D029": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Eat with us tonight. Mira will not forgive me if I let you sleep on the hall floor."
+ },
+ "D030": {
+  "kind": "D",
+  "who": "Mira",
+  "text": "Sit, sit. Torven says you walked the deep ways alone."
+ },
+ "D031": {
+  "kind": "D",
+  "who": "You",
+  "text": "Most of the way. Some passages ended in stone, and I had to turn back."
+ },
+ "D032": {
+  "kind": "D",
+  "who": "Nessa",
+  "text": "Were there creatures?"
+ },
+ "D033": {
+  "kind": "D",
+  "who": "You",
+  "text": "A few. They mostly wanted the light."
+ },
+ "D034": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Before we eat, the children sing the blessing. The guest answers it."
+ },
+ "D035": {
+  "kind": "D",
+  "who": "Lio",
+  "text": "You have to sing it back. Exactly."
+ },
+ "D036": {
+  "kind": "D",
+  "who": "Lio",
+  "text": "She got it!"
+ },
+ "D037": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "We cooked what you carried up from the chamber. Everyone at this table should taste what saved them."
+ },
+ "D038": {
+  "kind": "D",
+  "who": "Nessa",
+  "text": "It glows a little."
+ },
+ "D039": {
+  "kind": "D",
+  "who": "Mira",
+  "text": "Eat it anyway."
+ },
+ "D040": {
+  "kind": "D",
+  "who": "Mira",
+  "text": "Your father must miss you."
+ },
+ "D041": {
+  "kind": "D",
+  "who": "You",
+  "text": "He keeps the outpost alone now. I will be home tomorrow."
+ },
+ "D042": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Tomorrow, then. Rest here tonight. The road will be clear by morning."
+ },
+ "D043": {
+  "kind": "D",
+  "who": "Torven",
+  "text": "Close enough. They will teach it to you properly next time."
+ },
+ "P001": {
+  "kind": "P",
+  "who": "",
+  "text": "Sing the blessing back: keys 1 to 7"
+ },
+ "P002": {
+  "kind": "P",
+  "who": "",
+  "text": "The children sing the blessing."
+ },
+ "C013": {
+  "kind": "C",
+  "who": "",
+  "text": "Morning. The road home is clear. Far back on it, a bell door has fallen shut."
+ },
+ "C014": {
+  "kind": "C",
+  "who": "",
+  "text": "The deep cave. The roof hangs low in places."
+ },
+ "D044": {
+  "kind": "D",
+  "who": "",
+  "text": "The roof of the cave has come down. Broken stone fills the way."
+ },
+ "D045": {
+  "kind": "D",
+  "who": "You",
+  "text": "The road is shut. I have to tell my father."
+ },
+ "C015": {
+  "kind": "C",
+  "who": "",
+  "text": "Go back to the outpost."
+ },
+ "D046": {
+  "kind": "D",
+  "who": "You",
+  "text": "The cave has fallen in. The road to the Assembly is shut."
+ },
+ "D047": {
+  "kind": "D",
+  "who": "Father",
+  "text": "Then there is only the old road, west, through the deep ways. It is long, treacherous, and no one from here has walked it in years."
+ },
+ "D048": {
+  "kind": "D",
+  "who": "Father",
+  "text": "The stores will not last until someone clears that cave. Take this map. Find the Assembly, tell them what has happened, and bring back the light."
+ },
+ "C016": {
+  "kind": "C",
+  "who": "",
+  "text": "Go west, through the door behind the outpost."
+ },
+ "D049": {
+  "kind": "D",
+  "who": "You",
+  "text": "Torven asks for your counsel. He says the whole community is struggling for food."
+ },
+ "D050": {
+  "kind": "D",
+  "who": "Father",
+  "text": "Then it is not only us."
+ },
+ "D051": {
+  "kind": "D",
+  "who": "Father",
+  "text": "Rest now. I will think on what to tell him."
+ },
+ "D052": {
+  "kind": "D",
+  "who": "Father",
+  "text": "You came back. And with stores."
+ },
+ "D053": {
+  "kind": "D",
+  "who": "Father",
+  "text": "Rest now. The light is home, and so are you."
+ },
+ "D054": {
+  "kind": "D",
+  "who": "Father",
+  "text": "You have brought the light home."
+ },
+ "P003": {
+  "kind": "P",
+  "who": "",
+  "text": "Stand in the light. The rite begins."
+ },
+ "P004": {
+  "kind": "P",
+  "who": "",
+  "text": "Hold E as the light rises · release as it falls"
+ },
+ "P005": {
+  "kind": "P",
+  "who": "",
+  "text": "This bell is silent this cycle."
+ },
+ "P006": {
+  "kind": "P",
+  "who": "",
+  "text": "E strike · Q turn the bell"
+ },
+ "P007": {
+  "kind": "P",
+  "who": "",
+  "text": "E take the light"
+ },
+ "P008": {
+  "kind": "P",
+  "who": "",
+  "text": "E strike the great bell"
+ },
+ "P009": {
+  "kind": "P",
+  "who": "",
+  "text": "Tell your father."
+ },
+ "P010": {
+  "kind": "P",
+  "who": "",
+  "text": "Go back to the outpost and tell your father."
+ },
+ "P011": {
+  "kind": "P",
+  "who": "",
+  "text": "Go west, through the door behind the outpost."
+ },
+ "P012": {
+  "kind": "P",
+  "who": "",
+  "text": "Walk back into the hall, to the circle of light."
+ },
+ "P013": {
+  "kind": "P",
+  "who": "",
+  "text": "Bring the light to your father."
+ },
+ "P014": {
+  "kind": "P",
+  "who": "",
+  "text": "Carry the light home to the outpost."
+ },
+ "P015": {
+  "kind": "P",
+  "who": "",
+  "text": "Walk east, toward the Assembly."
+ },
+ "P016": {
+  "kind": "P",
+  "who": "",
+  "text": "Space to jump · hold for height"
+ },
+ "P017": {
+  "kind": "P",
+  "who": "",
+  "text": "Keep the bells ringing."
+ },
+ "P018": {
+  "kind": "P",
+  "who": "",
+  "text": "The bells have turned. Ring them again, the other way round."
+ },
+ "P019": {
+  "kind": "P",
+  "who": "",
+  "text": "Read the wall. Ring the bells so they answer one another."
+ },
+ "P020": {
+  "kind": "P",
+  "who": "",
+  "text": "The gate sings. Listen."
+ },
+ "P021": {
+  "kind": "P",
+  "who": "",
+  "text": "Answer the gate · keys 1–7"
+ },
+ "P022": {
+  "kind": "P",
+  "who": "",
+  "text": "Step into the circle of light."
+ },
+ "P023": {
+  "kind": "P",
+  "who": "",
+  "text": "The alcove beyond is open."
+ },
+ "S001": {
+  "kind": "S",
+  "who": "",
+  "text": "Bell gate open"
+ },
+ "S002": {
+  "kind": "S",
+  "who": "",
+  "text": "Carrying the light and stores"
+ },
+ "S003": {
+  "kind": "S",
+  "who": "",
+  "text": "Carrying the light"
+ },
+ "S004": {
+  "kind": "S",
+  "who": "",
+  "text": "Carrying the map"
+ },
+ "C017": {
+  "kind": "C",
+  "who": "",
+  "text": "You know this road. There is no map for it."
+ }
+}

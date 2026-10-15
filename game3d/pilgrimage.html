@@ -672,14 +672,14 @@ const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const glCanvas=document.getElementById('gl'),glFg=document.getElementById('glfg');let G3=!!(window.World3D&&World3D.init(glCanvas,glFg));glCanvas.hidden=glFg.hidden=!G3;
 function setG3(on){G3=on&&!!window.World3D&&World3D.ready();glCanvas.hidden=glFg.hidden=!G3;if(window.World3D)World3D.setEnabled(G3);if(G3)load3D(WORLD);}
 function load3D(name){if(!window.World3D||!World3D.ready())return;const D=name==='east'?EAST:WEST_DATA;World3D.load(name,D,name!=='east'?{}:{east:{altar:ALTAR,shelfX:SHELF_X,
-  arches:[[40,150],[700,110],[1000,120]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,bellZone:[1100+BX,1180+BX+1010],gateZone:[3900+RD,4520+RD],halls:[[4690+RD,124,206],[5370+RD,146,226]],gallery:[5000+RD,150,250,96],stream:[560,1150],
+  arches:[[40,150],[700,110],[1000,120]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,bellZone:[1100+BX,1180+BX+1010],gateZone:[3900+RD,4520+RD],rubble:RUBBLE,halls:[[4690+RD,124,206],[5370+RD,146,226]],gallery:[5000+RD,150,250,96],stream:[560,1150],
   lintels:[[1100,190],[DOOR1.x+DOOR1.w/2,DOOR1.y],[DOOR1W.x+DOOR1W.w/2,DOOR1W.y],[DOORG.x+DOORG.w/2,DOORG.y],[DOOR2.x+DOOR2.w/2,DOOR2.y]]}});}
 let SHK=null;
 function draw3D(t){
   const rs=t-(state.rumbleT||-99),shk=rs>0&&rs<7.5?Math.sin(Math.PI*rs/7.5)*(rs>1.4&&rs<5.6?3.2:1.2):0;
   SHK=shk?[(Math.random()-.5)*shk,(Math.random()-.5)*shk]:null;
   const vs=state.inShaft?(VS===DESCENT?'descent':'shaft'):null;if(vs)World3D.loadVertical(vs,VS);
-  World3D.frame({loop:state.loop,world:vs||WORLD,camX,camY:vs?shaftCamY:0,t,shake:SHK?[-SHK[0],-SHK[1]]:null,shaftI:vs?null:SHAFTS.map(shaftI),nearBell:!vs&&WORLD==='west'&&nearGroveBell()});
+  World3D.frame({loop:state.loop,world:vs||WORLD,camX,camY:vs?shaftCamY:0,t,shake:SHK?[-SHK[0],-SHK[1]]:null,shaftI:vs?null:SHAFTS.map(shaftI),nearBell:!vs&&WORLD==='west'&&nearGroveBell(),rubble:!vs&&WORLD==='east'&&state.loop===3?(rubbleUp()?2:1):0});
 }
 let bgTiles=null,fgTiles=null,vignette;
 const TILE=2048;
@@ -1772,7 +1772,8 @@ function drawWays(){
 function drawRubble(t){
   const sx=RUBBLE.x-camX;if(sx<-200||sx>W+200||state.loop!==3)return;const R=mulberry32(77),up=rubbleUp();
   ctx.fillStyle='#0f1c24';
-  for(let i=0;i<(up?42:12);i++){const bx=sx-30+R()*(RUBBLE.w+60),by=up?CEIL+R()*(GROUND-CEIL):GROUND-R()*40,r=up?14+R()*30:8+R()*14;
+  if(!G3)for(let i=0;i<(up?42:12);i++){   // the 3D view has its own boulders; the dust below stays
+const bx=sx-30+R()*(RUBBLE.w+60),by=up?CEIL+R()*(GROUND-CEIL):GROUND-R()*40,r=up?14+R()*30:8+R()*14;
     ctx.beginPath();ctx.ellipse(bx,Math.min(by,GROUND-r*.6),r,r*.75,R()*3,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#04080b';ctx.lineWidth=1;ctx.stroke();}
   const since=t-(state.rumbleT||-99);
   if(up&&since<14){const k=Math.max(0,1-since/14);ctx.fillStyle=`rgba(120,140,150,${.22*k})`;ctx.fillRect(sx-120,CEIL,RUBBLE.w+240,GROUND-CEIL);

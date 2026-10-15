@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import { C, GROUND, makeWorld, addLight, trackGlow } from './core.js';
 import { makeNoise, mulberry32, smooth, lerp, clamp } from './util.js';
-import { loftRock, rectOutline } from './rockgen.js';
+import { loftRock, rectOutline, boxUV } from './rockgen.js';
 import { TEX, mergeSafe, cutStoneMat, caveRockMat, glowTex, BUMP, MASONRY, masonryMat, rockMat, darkRockMat, worldUVBox, rockGeo, driftPoints, glowShader, canvasTex, inscribe } from './materials.js';
 import { buildGrove } from './grove.js';
 
@@ -211,6 +211,29 @@ export function buildHorizontal(name, D, X) {
     E.lintels.forEach(([cx, y], i) => { const top = roof(cx) + 40, g = worldUVBox(90, top - Y(y), 150); g.translate(cx, (top + Y(y)) / 2, -40); (isPlain(cx) ? list : ins).push(g); });
     { const a = E.altar, g = worldUVBox(a.w, a.h, 70); g.translate(a.x + a.w / 2 - a.w / 2, Y(a.y + a.h / 2), -10); ins.push(g); }
     mergeAdd(list, masonryMat(0, 0xaebdc8)); mergeAdd(ins, masonryMat(2, 0xc0ccd5));
+    // the cave-in (third cycle): a pile of fallen boulders from floor to roof that shuts the road, and once the
+    // party has cleared it, broken stones pushed to the sides. v31 says which shows (o.rubble: 2 pile, 1 cleared, 0 none).
+    if (E.rubble) {
+      const RB = E.rubble, Rr = mulberry32(4690), cx = RB.x + RB.w / 2, top = roof(cx) + 10;
+      const boulder = (w2, h2, d2, x, y, z, seed) => { const g = rockGeo(w2, h2, d2, seed, false); g.rotateY(Rr() * 6); g.rotateX((Rr() - .5) * .6); g.translate(x, y, z);
+        const p = g.attributes.position, c = new Float32Array(p.count * 3), col = new THREE.Color();
+        for (let i = 0; i < p.count; i++) { const u = clamp((p.getY(i) - y + h2) / (2 * h2), 0, 1); col.setRGB(.2, .25, .29).lerp(new THREE.Color(.5, .58, .64), u).multiplyScalar(.85 + Rr() * .3); c.set([col.r, col.g, col.b], i * 3); }
+        g.setAttribute('color', new THREE.BufferAttribute(c, 3)); boxUV(g, 120); return g; };
+      const pile = [], left = [];
+      for (let i = 0; i < 70; i++) {                     // the pile: big stones low, smaller ones wedged up to the roof
+        const u = Rr(), y = Math.pow(u, 1.3) * top, r = lerp(46, 16, y / top) * (.7 + Rr() * .6);
+        const z = -260 + Rr() * 340, x = cx + (Rr() - .5) * (RB.w + 140) * (1 - .35 * y / top);
+        pile.push(boulder(r * (1 + Rr() * .5), r * (.7 + Rr() * .4), r * (1 + Rr() * .4), x, Math.max(r * .4, y), z, 900 + i));
+      }
+      for (let i = 0; i < 22; i++) {                     // cleared: broken stones heaped at the sides and against the wall
+        const side = Rr() < .5 ? -1 : 1, r = 8 + Rr() * 18, x = cx + side * (RB.w / 2 + 30 + Rr() * 110), z = -240 + Rr() * 200;
+        left.push(boulder(r * 1.3, r * .7, r, x, r * .3, z, 1000 + i));
+      }
+      for (let i = 0; i < 8; i++) { const r = 5 + Rr() * 8; left.push(boulder(r * 1.2, r * .6, r, cx + (Rr() - .5) * RB.w, r * .2, -60 + Rr() * 40, 1100 + i)); }   // grit left on the road
+      const pileM = new THREE.Mesh(mergeSafe(pile), caveRockMat), leftM = new THREE.Mesh(mergeSafe(left), caveRockMat);
+      G.add(pileM, leftM); pileM.visible = leftM.visible = false;
+      w.updates.push((t, o) => { pileM.visible = o.rubble === 2; leftM.visible = o.rubble === 1; });
+    }
   }
 
   // ---------- the outpost's stream (v31 drawWater): it rises a little each cycle ----------
