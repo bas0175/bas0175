@@ -229,7 +229,7 @@ const CAVE=[3900,3900+CV];
 const E_CAVES=[CAVE];
 const E_ZONES=[{id:'outpost',x1:1100,name:'The outpost'},{id:'road',x1:CAVE[0],name:'The road'},{id:'cave',x1:CAVE[1],name:'The deep cave'},{id:'road3',x1:4300+CV,name:'The road'},
   {id:'bells',x1:5480+CV,name:'The bell gate'},{id:'road2',x1:6450+CV,name:'The road'},{id:'gate',x1:4520+RD,name:'The Assembly gate'},{id:'hall',x1:5680+RD,name:'The Assembly'},{id:'alcove',x1:Infinity,name:'The alcove'}];
-const SPACES={west:{rt:5.2,send:.5},outpost:{rt:2.4,send:.3},road:{rt:4.2,send:.4},cave:{rt:5.6,send:.52},road3:{rt:4.2,send:.4},bells:{rt:3.6,send:.42},road2:{rt:4.2,send:.4},gate:{rt:3.2,send:.4},hall:{rt:6.5,send:.55},alcove:{rt:2.2,send:.35}};
+const SPACES={west:{rt:5.2,send:.5},outpost:{rt:2.4,send:.3},road:{rt:4.2,send:.4},cave:{rt:5.6,send:.52},road3:{rt:4.2,send:.4},bells:{rt:3.6,send:.42},road2:{rt:4.2,send:.4},gate:{rt:3.2,send:.4},hall:{rt:6.5,send:.55},alcove:{rt:2.2,send:.35},house:{rt:1.3,send:.22}};
 const BX=3120+CV;   // the bell gate (the earlier threshold chamber) sits at the end of the long road
 const SLOTS=[{x:1270+BX,top:GROUND},{x:1490+BX,top:360},{x:1730+BX,top:300},{x:1990+BX,top:GROUND},{x:2150+BX,top:GROUND}];
 const DOOR1={x:2236+BX,y:200,w:28,h:240};    // bell gate, east door
@@ -1494,7 +1494,86 @@ function restartJourney(){
 function caption(text,dur=7){state.caption=text;state.captionUntil=nowS()+dur;}
 function nearAltar(){return WORLD==='east'&&ritual.done&&state.door2Open&&!state.gathered&&Math.abs(player.x+player.w/2-ALTAR.x)<66;}
 function closeReturnBells(){state.returnBells=true;state.door1WOpen=false;phrase=null;stones.forEach(s=>{s.idx=s.start;s.last=-1e9;});renderRelations();}
-function gather(){state.carrying=true;state.gathered=true;A.fire('item.gather',{x:ALTAR.x},'world');closeReturnBells();A.fire('door.close',{x:DOOR1W.x},'world');caption('Carry the light home. Far back on the road, a bell door has fallen shut.');}
+function gather(){state.carrying=true;state.gathered=true;A.fire('item.gather',{x:ALTAR.x},'world');closeReturnBells();A.fire('door.close',{x:DOOR1W.x},'world');
+  if(state.loop===3&&state.stores&&!state.story.dined){openDialog(DINNER.invite,()=>enterDinner());return;}
+  caption('Carry the light home. Far back on the road, a bell door has fallen shut.');}
+
+/* ---------- Torven's house (cycle 3): dinner with his family while the party clears the road ----------
+   A fixed scene: dialogue, then the children sing a short blessing and she sings it back (keys 1-7), then more talk,
+   and she wakes in the morning by the alcove with the road open. No way to fail: after three misses they let it go. */
+const DINNER={
+  invite:[{who:'Torven',text:'Veyra. The party will not have your road open before morning.'},
+    {who:'Torven',text:'Eat with us tonight. Mira will not forgive me if I let you sleep on the hall floor.'}],
+  before:[{who:'Mira',text:'Sit, sit. Torven says you walked the deep ways alone.'},
+    {who:'You',text:'Most of the way. Some passages ended in stone, and I had to turn back.'},
+    {who:'Nessa',text:'Were there creatures?'},
+    {who:'You',text:'A few. They mostly wanted the light.'},
+    {who:'Torven',text:'Before we eat, the children sing the blessing. The guest answers it.'},
+    {who:'Lio',text:'You have to sing it back. Exactly.'}],
+  after:[{who:'Lio',text:'She got it!'},
+    {who:'Torven',text:'We cooked what you carried up from the chamber. Everyone at this table should taste what saved them.'},
+    {who:'Nessa',text:'It glows a little.'},
+    {who:'Mira',text:'Eat it anyway.'},
+    {who:'Mira',text:'Your father must miss you.'},
+    {who:'You',text:'He keeps the outpost alone now. I will be home tomorrow.'},
+    {who:'Torven',text:'Tomorrow, then. Rest here tonight. The road will be clear by morning.'}],
+  missed:[{who:'Torven',text:'Close enough. They will teach it to you properly next time.'}],
+  notes:[1,3,4],   // the blessing: C E G (keys 2 4 5), sung by the children an octave up
+};
+const dinner={on:false,phase:'',pos:0,miss:0,at:0,shown:[],lit:[],bless:0,glow:1};
+function enterDinner(){
+  state.mode='transition';A.voiceStopAll();$('fade').classList.add('on');log('scene.enter',{scene:'dinner'},'world');
+  setTimeout(()=>{Object.assign(dinner,{on:true,phase:'talk',pos:0,miss:0,shown:[],lit:[],bless:0,glow:1});
+    if(G3&&window.World3D)World3D.loadHouse('house',{figs:houseFigs()});
+    A.setSpace('house');$('hint').textContent='';$('hudZone').textContent='Torven\'s house';$('fade').classList.remove('on');state.mode='dinner';
+    setTimeout(()=>{if(dinner.phase==='talk')openDialog(DINNER.before,()=>{state.mode='dinner';dinner.phase='wait';dinner.at=nowS()+.9;});},1400);},1300);
+}
+function houseFigs(){
+  const S=SHEET_META.idle,T=TORVEN_META.idle,c=k=>CAST_META[k];
+  return [{img:SHEET_IMG,frames:S,h:100,x:-66,z:4,flip:false,sink:-20},            // Veyra, near left, facing the table
+    {img:TORVEN_IMG,frames:T,h:100,x:66,z:-22,flip:false,sink:-26},                // Torven, near right
+    {img:CAST_IMG,frames:c('x11'),h:80,x:-66,z:-112,flip:true,sink:-10},          // Nessa, their daughter
+    {img:CAST_IMG,frames:c('x06'),h:66,x:66,z:-132,flip:false,sink:-8},           // Lio, their son
+    {img:CAST_IMG,frames:c('x09'),h:94,x:0,z:-224,flip:false,sink:-24}];          // Mira, at the head of the table
+}
+function childNote(deg,at,dur){setTimeout(()=>{if(!dinner.on)return;A.voiceStart('child',PENTA[deg]*2);dinner.shown.push(nowS());},at*1000);setTimeout(()=>A.voiceStop('child'),(at+dur)*1000);}
+function updateDinner(){
+  const t=nowS();dinner.glow=lerp(dinner.glow,dinner.phase==='done'?1.35:1,.03);dinner.bless=lerp(dinner.bless,dinner.phase==='done'?1:0,.03);
+  if(dinner.phase==='wait'&&t>=dinner.at){   // the children sing the blessing
+    dinner.phase='call';dinner.pos=0;dinner.lit=[];dinner.shown=[];
+    DINNER.notes.forEach((d,i)=>childNote(d,i*.62,.5));dinner.at=t+DINNER.notes.length*.62+.2;A.fire('dinner.call',{notes:DINNER.notes.map(d=>DEG_NAME[d]).join(' ')},'world');}
+  else if(dinner.phase==='call'&&t>=dinner.at){dinner.phase='listen';dinner.at=t+12;}
+  else if(dinner.phase==='listen'&&t>=dinner.at){dinner.phase='wait';dinner.at=t;}   // a long silence: they sing it again
+  $('hint').textContent=dinner.phase==='listen'?'Sing the blessing back: keys 1 to 7':dinner.phase==='call'?'The children sing the blessing.':'';
+}
+function dinnerSing(deg){
+  if(dinner.phase!=='listen')return;const want=DINNER.notes[dinner.pos];
+  log('voice.note',{degree:deg+1,note:DEG_NAME[deg],expected:DEG_NAME[want],correct:deg===want,scene:'dinner'},'player');
+  if(deg===want){dinner.lit.push(dinner.pos);dinner.pos++;dinner.at=nowS()+12;
+    if(dinner.pos>=DINNER.notes.length){dinner.phase='done';A.fire('dinner.blessed',{misses:dinner.miss},'world');setTimeout(()=>openDialog(DINNER.after,endDinner),1600);}}
+  else{dinner.miss++;dinner.lit=[];dinner.pos=0;
+    if(dinner.miss>=3){dinner.phase='done';setTimeout(()=>openDialog([...DINNER.missed,...DINNER.after.slice(1)],endDinner),900);}
+    else{dinner.phase='wait';dinner.at=nowS()+1.6;}}
+}
+function endDinner(){
+  state.mode='transition';A.voiceStopAll();$('fade').classList.add('on');state.story.dined=1;log('scene.exit',{scene:'dinner'},'world');
+  setTimeout(()=>{dinner.on=false;$('hint').textContent='';
+    Object.assign(player,{x:ALTAR.x-120,y:GROUND-player.h,vx:0,vy:0,onGround:true,face:-1});camX=clamp(player.x+12-W*.42,0,WORLD_W-W);
+    state.zone=zoneAt(player.x);A.setSpace(state.zone);updateHud();$('fade').classList.remove('on');state.mode='play';state.graceUntil=nowS()+1.5;
+    caption('Morning. The road home is clear. Far back on it, a bell door has fallen shut.',8);},1600);
+}
+function renderDinner(t){
+  if(G3&&window.World3D)World3D.frame({world:'house',camX:-480,camY:0,t,glow:dinner.glow,bless:dinner.bless});
+  else{ctx.fillStyle='#05080b';ctx.fillRect(0,0,W,H);[[452,300],[500,330]].forEach(([x,y])=>{const g=ctx.createRadialGradient(x,y,2,x,y,140);g.addColorStop(0,'rgba(255,240,215,.9)');g.addColorStop(.1,'rgba(255,230,190,.35)');g.addColorStop(1,'rgba(255,230,190,0)');ctx.fillStyle=g;ctx.fillRect(x-140,y-140,280,280);});}
+  // the blessing: one mark per note; each lights as the children sing it, with the key that sings it
+  if(dinner.phase==='call'||dinner.phase==='listen'||dinner.phase==='done'){
+    const n=DINNER.notes.length,x0=W/2-(n-1)*34;ctx.save();ctx.textAlign='center';ctx.font='13px "IBM Plex Mono",monospace';
+    DINNER.notes.forEach((d,i)=>{const x=x0+i*68,y=96,heard=i<dinner.shown.length,lit=dinner.lit.includes(i)||dinner.phase==='done';
+      const g=ctx.createRadialGradient(x,y,1,x,y,lit?26:16);g.addColorStop(0,lit?'rgba(255,236,200,.95)':heard?'rgba(200,225,240,.7)':'rgba(200,225,240,.18)');g.addColorStop(1,'rgba(200,225,240,0)');
+      ctx.fillStyle=g;ctx.fillRect(x-30,y-30,60,60);if(heard){ctx.fillStyle='rgba(225,238,245,.85)';ctx.fillText(String(d+1),x,y+34);}});
+    ctx.restore();}
+  ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
+}
 function beginReturn(){
   state.mode='transition';stopIntone();A.voiceStopAll();log('loop.complete',{loop:state.loop},'world');
   setTimeout(()=>document.getElementById('fade').classList.add('on'),1600);
@@ -1916,6 +1995,7 @@ function render(){
   const t=nowS();
   ctx.clearRect(0,0,W,H);
   if(!bgTiles)return;
+  if(dinner.on){renderDinner(t);return;}
   if(G3)draw3D(t);
   if(state.inShaft){(VS===DESCENT?renderDescent:renderShaft)(t);if(state.mode==='map')drawMap(t);return;}
   const rs=t-(state.rumbleT||-99),shk=rs>0&&rs<7.5?Math.sin(Math.PI*rs/7.5)*(rs>1.4&&rs<5.6?3.2:1.2):0;
@@ -2028,6 +2108,7 @@ const SCENES=[
   ['Deep ways · Near the end',()=>{toWest(0);placeAt(1200,-1);}],
   ['Cycle 3 · Arrival at the Assembly',()=>{toWest(0);placeAt(1200,-1);arriveFromWest();}],
   ['Cycle 3 · Rite (after arrival)',()=>{setCycle(3,{rumbled:1,collapseSeen:1,mapGiven:1,arrived:1,caveCleared:1});state.stores=true;openAll();Object.assign(state,{door2Open:true,lift2:1});greeted();state.talked.home=1;buildFigures();placeAt(CIRCLE.x-170);}],
+  ['Cycle 3 · Dinner at Torven\'s',()=>{setCycle(3,{rumbled:1,collapseSeen:1,mapGiven:1,arrived:1,caveCleared:1});state.stores=true;openAll();greeted();riteDone();buildFigures();placeAt(ALTAR.x-130);gather();}],
   ['Cycle 3 · Home with stores',()=>{setCycle(3,{rumbled:1,collapseSeen:1,mapGiven:1,arrived:1,caveCleared:1});state.stores=true;openAll();greeted();riteDone();homeward();buildFigures();placeAt(FATHER_X+260,-1);}],
 ];
 function openJump(){if(!['play','paused','title','end'].includes(state.mode))return;state.jumpFrom=state.mode;if(state.mode==='play'){state.mode='paused';pausedAt=nowS();for(const k in keys)keys[k]=false;}
@@ -2102,6 +2183,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyF'&&!e.repeat){RUN4=!RUN4;caption(RUN4?'Run: 4 frames':'Run: 8 frames',2);return;}
   if(state.mode==='dialog'){if(['KeyE','Enter','Space','NumpadEnter'].includes(e.code)){e.preventDefault();if(!e.repeat)advanceDialog();}return;}
   if(e.code==='Escape'||e.code==='KeyP'){e.preventDefault();if(state.mode==='play')pause();else if(state.mode==='paused')resume();return;}
+  if(state.mode==='dinner'){const dd=/^(Digit|Numpad)([1-7])$/.exec(e.code);if(dd&&!e.repeat){e.preventDefault();const d=+dd[2]-1;A.voiceStart('k'+d,PENTA[d]);dinnerSing(d);}return;}
   if(state.mode!=='play')return;
   const k=KEYMAP[e.code];
   if(k){e.preventDefault();if(k==='jump'&&!keys.jump)jumpQueued=true;keys[k]=true;return;}
@@ -2174,7 +2256,7 @@ function drawMap(t){
   ctx.fillStyle='rgba(48,40,32,.55)';ctx.font='11px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('M or Esc to fold the map away',W/2,my+mh-14);
   ctx.restore();
 }
-function frame(ts){const dt=Math.min(.033,(ts-last)/1000);last=ts;if(state.mode==='play'){update(dt);trackMap();}else if(state.mode==='dialog'&&!state.inShaft&&!state.dying&&(!player.onGround||Math.abs(player.vx)>1)){movePlayer(dt);camX=lerp(camX,clamp(player.x+12-W*.42,0,WORLD_W-W),.12);}render();requestAnimationFrame(frame);}
+function frame(ts){const dt=Math.min(.033,(ts-last)/1000);last=ts;if(state.mode==='play'){update(dt);trackMap();}else if(state.mode==='dinner')updateDinner();else if(state.mode==='dialog'&&!state.inShaft&&!state.dying&&(!player.onGround||Math.abs(player.vx)>1)){movePlayer(dt);camX=lerp(camX,clamp(player.x+12-W*.42,0,WORLD_W-W),.12);}render();requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 </script>
 </body>

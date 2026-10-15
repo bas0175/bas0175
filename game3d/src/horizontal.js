@@ -21,7 +21,7 @@ export function buildHorizontal(name, D, X) {
   w.roof = roof; w.depth = depth;
   // stretches of wall kept plain (no inscriptions): the bell gate, and the Assembly gate where the call is sung
   // the deep ways: the further in, the fewer inscriptions; normal again toward either end
-  const insK = x => X.east ? 1 : 1 - .85 * smooth(.08, .4, Math.min(x, W - x) / W);
+  const insK = x => X.east ? 1 : 1 - .97 * smooth(.06, .44, Math.min(x, W - x) / W);
   const isPlain = x => !!X.east && [X.east.bellZone, X.east.gateZone].some(z => z && x > z[0] && x < z[1]);
 
   // ---------- floors and the gaps between them ----------

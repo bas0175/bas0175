@@ -23,7 +23,7 @@ export function init(canvas, fgCanvas) {
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   const scene = new THREE.Scene(); scene.background = new THREE.Color(0x04070a); scene.fog = new THREE.Fog(0x04070a, DIST + 200, DIST + 2600);
   const camera = new THREE.PerspectiveCamera(FOV, VW / VH, 10, 20000);
-  scene.add(new THREE.HemisphereLight(0x8fb4cc, 0x121a20, 1.25));
+  const hemi = new THREE.HemisphereLight(0x8fb4cc, 0x121a20, 1.25); scene.add(hemi);
   const key = new THREE.DirectionalLight(0xa9c8dc, .7); key.position.set(-.3, .9, 1.1); scene.add(key); scene.add(key.target);
   for (let i = 0; i < POINTS; i++) { const l = new THREE.PointLight(0xffffff, 0, 600, 1.3); scene.add(l); pool.points.push(l); }
   for (let i = 0; i < SPOTS; i++) { const l = new THREE.SpotLight(0xcfe3ee, 0, 900, .42, .7, 1.5); scene.add(l, l.target); pool.spots.push(l); }
@@ -46,7 +46,7 @@ export function init(canvas, fgCanvas) {
     fs.add(new THREE.HemisphereLight(0x8fb4cc, 0x121a20, 1.0)); const fk = new THREE.DirectionalLight(0xa9c8dc, .6); fk.position.set(-.3, .9, 1.1); fs.add(fk);
     C.fg = { renderer: fr, scene: fs };
   }
-  Object.assign(C, { renderer, scene, camera, composer, grade, key });
+  Object.assign(C, { renderer, scene, camera, composer, grade, key, hemi });
 }
 
 export function resize(w, h) {
@@ -69,7 +69,10 @@ export function frame(o) {
   C.active = w;
   // camera: v31's view of 960 x 540, centred, looking straight at z = 0
   const cx = o.camX + VW / 2 + (o.shake ? o.shake[0] : 0), cy = w.mapY(o.camY + VH / 2) - (o.shake ? o.shake[1] : 0);
-  C.camera.position.set(cx, cy, DIST); C.camera.lookAt(cx, cy, 0); C.camera.updateProjectionMatrix();
+  if (w.cam) { C.camera.position.copy(w.cam.pos); C.camera.lookAt(w.cam.look); }   // a fixed view (Torven's house)
+  else { C.camera.position.set(cx, cy, DIST); C.camera.lookAt(cx, cy, 0); }
+  C.camera.updateProjectionMatrix();
+  C.hemi.intensity = w.ambient ?? 1.25; C.key.intensity = w.keyI ?? .7;   // a world can set its own fill (the house is lit by its orbs)
   C.key.position.set(cx - 300, cy + 900, 1100); C.key.target.position.set(cx, cy, 0);
   // lights: give the pool to the strongest sources near the view
   const lo = o.camX - 500, hi = o.camX + VW + 500;
