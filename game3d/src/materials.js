@@ -1,5 +1,8 @@
 // Shared textures and materials for the 3D view. All procedural, so the build stays one file.
 import * as THREE from 'three';
+import MAS_URL from '../assets/tex-masonry.png';
+import ROCK_URL from '../assets/tex-rock.png';
+import INS_URL from '../assets/tex-inscription.png';
 import { makeNoise, mulberry32, clamp } from './util.js';
 
 export function canvasTex(w, h, draw, srgb = true) {
@@ -54,12 +57,22 @@ function masonryTex(seed, inscribed) {
     if (inscribed) inscribe(g, R, 24, 24, w - 48, h - 48, 'rgba(150,190,212,.32)');
   });
 }
-export const MASONRY = [masonryTex(3, false), masonryTex(5, false), masonryTex(7, true)];
-MASONRY.forEach(t => { t.wrapS = t.wrapT = THREE.RepeatWrapping; });
+// Textures made from the reference paintings (tools/make_textures.py): cut stone, raw rock, inscriptions.
+function refTex(url, rx, ry, color = true) { const t = new THREE.TextureLoader().load(url); if (color) t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); t.anisotropy = 8; return t; }
+export const TEX = {
+  masonry: refTex(MAS_URL, 160 / 600, 160 / 150), masonryBump: refTex(MAS_URL, 160 / 600, 160 / 150, false),
+  cut: refTex(MAS_URL, 140 / 600, 140 / 150), cutBump: refTex(MAS_URL, 140 / 600, 140 / 150, false),
+  inscr: refTex(INS_URL, 160 / 300, 160 / 340), inscrBump: refTex(INS_URL, 160 / 300, 160 / 340, false),
+  rock: refTex(ROCK_URL, 140 / 420, 140 / 250), rockBump: refTex(ROCK_URL, 140 / 420, 140 / 250, false),
+  shell: refTex(ROCK_URL, 240 / 520, 240 / 310), shellBump: refTex(ROCK_URL, 240 / 520, 240 / 310, false),
+  INS_URL,
+};
+export const MASONRY = [TEX.masonry, TEX.masonry, TEX.inscr];
+const MASONRY_BUMP = [TEX.masonryBump, TEX.masonryBump, TEX.inscrBump];
 export const BUMP = stoneBump(11);
 
 export function masonryMat(i = 0, tint = 0xffffff) {
-  return new THREE.MeshStandardMaterial({ map: MASONRY[i], color: tint, roughness: .9, bumpMap: BUMP, bumpScale: 1.5 });
+  return new THREE.MeshStandardMaterial({ map: MASONRY[i], color: tint, roughness: .9, bumpMap: MASONRY_BUMP[i], bumpScale: 2.2 });
 }
 export const rockMat = new THREE.MeshStandardMaterial({ color: 0x2a3640, roughness: .92, flatShading: true });
 export const darkRockMat = new THREE.MeshStandardMaterial({ color: 0x18222a, roughness: .95, flatShading: true });
@@ -132,5 +145,5 @@ const ROCK_DETAIL = (() => { const N = makeNoise(21); const t = canvasTex(256, 2
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const u = x / w * Math.PI * 2, v = y / h * Math.PI * 2, n = N.fbm(Math.cos(u) * 3 + 5, Math.sin(u) * 3 + Math.cos(v) * 3, Math.sin(v) * 3, 5);
     const c = clamp(205 + n * 120, 120, 255), i = (y * w + x) * 4; im.data[i] = c * .97; im.data[i + 1] = c; im.data[i + 2] = Math.min(255, c * 1.03); im.data[i + 3] = 255; }
   g.putImageData(im, 0, 0); }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
-export const caveRockMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: ROCK_DETAIL, bumpMap: BUMP, bumpScale: 3, roughness: .9 });
-export const cutStoneMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: MASONRY[1], bumpMap: BUMP, bumpScale: 1.6, roughness: .88 });
+export const caveRockMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: TEX.rock, bumpMap: TEX.rockBump, bumpScale: 3, roughness: .9 });
+export const cutStoneMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: TEX.cut, bumpMap: TEX.cutBump, bumpScale: 2.2, roughness: .88 });

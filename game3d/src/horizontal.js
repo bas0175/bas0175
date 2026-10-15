@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import { C, GROUND, makeWorld, addLight, trackGlow } from './core.js';
 import { makeNoise, mulberry32, smooth, lerp, clamp } from './util.js';
 import { loftRock, rectOutline } from './rockgen.js';
-import { mergeSafe, cutStoneMat, caveRockMat, glowTex, BUMP, MASONRY, masonryMat, rockMat, darkRockMat, worldUVBox, rockGeo, driftPoints, glowShader, canvasTex, inscribe } from './materials.js';
+import { TEX, mergeSafe, cutStoneMat, caveRockMat, glowTex, BUMP, MASONRY, masonryMat, rockMat, darkRockMat, worldUVBox, rockGeo, driftPoints, glowShader, canvasTex, inscribe } from './materials.js';
 import { buildGrove } from './grove.js';
 
 const Y = y => GROUND - y;
@@ -57,14 +57,14 @@ export function buildHorizontal(name, D, X) {
         if (j > 0) acc += Math.hypot(P[j].y - P[j - 1].y, P[j].z - P[j - 1].z);
         pos.push(x, y, z); uv.push(x / 240, acc / 240);
         const shade = .55 + .45 * clamp(.5 + N.fbm(x * .002 + 50, p.y * .002, p.z * .002, 3), 0, 1);
-        const c = new THREE.Color().setRGB(.16 * shade, .205 * shade, .25 * shade).multiplyScalar(1 - ck * .3);
+        const c = new THREE.Color().setRGB(.16 * shade, .205 * shade, .25 * shade).multiplyScalar((1 - ck * .3) * 1.7);
         if (isFloor) c.multiplyScalar(.82 * Math.exp(-dep / 380));
         col.push(c.r, c.g, c.b);
       }
     }
     for (let i = 0; i < xs.length - 1; i++) for (let j = 0; j < ROWS - 1; j++) { const a = i * ROWS + j, b = a + ROWS; idx.push(a, b, a + 1, b, b + 1, a + 1); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
-    G.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .93, bumpMap: BUMP, bumpScale: 2.2, side: THREE.DoubleSide })));
+    G.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, map: TEX.shell, roughness: .93, bumpMap: TEX.shellBump, bumpScale: 3, side: THREE.DoubleSide })));
   }
 
   // ---------- masonry back walls where people have built (outside the caves and the chamber) ----------
@@ -133,7 +133,7 @@ export function buildHorizontal(name, D, X) {
     const flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
     for (let i = 0; i < n; i++) {
       const x = X0 + R() * (X1 - X0), up = R() < .4, Dd = depth(x), ck = caveK(x);
-      if (groveK(x) > .3 || (!up && R() > .45 + ck * .5)) continue;
+      if (groveK(x) > .3 || (!up && R() > .12 + ck * .83)) continue;   // stalactites mostly in the caves; the built halls stay clean
       const z = up ? -200 - R() * Dd * .6 : 60 - R() * Dd * .8;
       if (up && !isFloorX(x)) continue;
       const h = up ? 30 + R() * 130 : (40 + R() * 150) * (1 + ck * .6), r = h * (.12 + R() * .1);
@@ -158,23 +158,25 @@ export function buildHorizontal(name, D, X) {
         const f = new THREE.Mesh(new THREE.TubeGeometry(path, 40, 7, 6), frameMat); f.position.set(x, 0, -166); G.add(f); });
       const sh = worldUVBox(80, 10, 50); sh.translate(E.shelfX, Y(334), -40); list.push(sh); }
     // inscription walls behind the bell gate and the Assembly gate
-    const panelTex = (wpx) => canvasTex(1024, 192, (g, cw, ch) => { g.fillStyle = '#18303f'; g.fillRect(0, 0, cw, ch); g.strokeStyle = '#4a6c84'; g.lineWidth = 4; g.strokeRect(4, 4, cw - 8, ch - 8); g.strokeRect(18, 18, cw - 36, ch - 36); inscribe(g, mulberry32(wpx | 0), 36, 36, cw - 72, ch - 72, 'rgba(170,208,228,.4)'); });
+    const panelTex = (w2, h2) => { const t = new THREE.TextureLoader().load(TEX.INS_URL); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w2 / 300, h2 / 340); t.anisotropy = 8; return t; };
     E.walls.forEach(([x, ww]) => { const g = worldUVBox(ww, 420, 50); g.translate(x + ww / 2, 210, -175); list.push(g);
-      const m = new THREE.Mesh(new THREE.PlaneGeometry(ww - 20, 140), new THREE.MeshStandardMaterial({ map: panelTex(x), roughness: .85, emissive: 0x6fa0bc, emissiveMap: panelTex(x + 1), emissiveIntensity: .08 })); m.position.set(x + ww / 2, Y(171), -148); G.add(m); });
-    if (E.gateInscr) { const [x, ww] = E.gateInscr; const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, 150), new THREE.MeshStandardMaterial({ map: panelTex(x + 7), roughness: .85 })); m.position.set(x + ww / 2, Y(345), -148); G.add(m); }
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(ww - 20, 140), new THREE.MeshStandardMaterial({ map: panelTex(ww - 20, 140), roughness: .85, emissive: 0x6fa0bc, emissiveMap: panelTex(ww - 20, 140), emissiveIntensity: .1 })); m.position.set(x + ww / 2, Y(171), -148); G.add(m); });
+    if (E.gateInscr) { const [x, ww] = E.gateInscr; const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, 150), new THREE.MeshStandardMaterial({ map: panelTex(ww, 150), roughness: .85 })); m.position.set(x + ww / 2, Y(345), -148); G.add(m); }
     // lintels over the doors, the altar
     E.lintels.forEach(([cx, y], i) => { const top = roof(cx) + 40, g = worldUVBox(90, top - Y(y), 150); g.translate(cx, (top + Y(y)) / 2, -40); ins.push(g); });
     { const a = E.altar, g = worldUVBox(a.w, a.h, 70); g.translate(a.x + a.w / 2 - a.w / 2, Y(a.y + a.h / 2), -10); ins.push(g); }
     mergeAdd(list, masonryMat(0, 0xaebdc8)); mergeAdd(ins, masonryMat(2, 0xc0ccd5));
   }
 
-  // ---------- lamps: stone posts with a lamp in a niche ----------
+  // ---------- lamps: warm globes on stone posts ----------
   {
+    const orbMat = new THREE.MeshStandardMaterial({ color: 0xfff1da, emissive: 0xffd9a8, emissiveIntensity: 2.2, roughness: .4 });
     const posts = [], flames = [];
     D.lamps.forEach((lx, i) => {
-      const g = worldUVBox(26, 112, 26); g.translate(lx, 56, -70); posts.push(g);
-      const h = worldUVBox(30, 34, 30); h.translate(lx, 128, -70); posts.push(h);
-      const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffb060, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx, Y(318), -50); f.scale.set(46, 46, 1); G.add(f); flames.push({ f, i });
+      const g = worldUVBox(18, 108, 18); g.translate(lx, 54, -60); posts.push(g);
+      const cap = worldUVBox(26, 8, 26); cap.translate(lx, 110, -60); posts.push(cap);
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(9, 20, 14), orbMat); orb.position.set(lx, Y(318), -60); G.add(orb);
+      const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd7a0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx, Y(318), -50); f.scale.set(46, 46, 1); G.add(f); flames.push({ f, i });
       const fl = (t) => .85 + .15 * Math.sin(t * 3.1 + i * 1.7) * Math.sin(t * 1.3 + i);
       addLight(w, { kind: 'point', x: lx, y: Y(318), z: -10, color: 0xffa860, dist: 380, decay: 1.35, weight: 1.4, I: t => 420 * fl(t) });
     });
@@ -196,6 +198,17 @@ export function buildHorizontal(name, D, X) {
       const motes = driftPoints(Array.from({ length: 22 }, () => ({ x: s.x + (R() - .5) * s.bot * .6, u: R(), z: z + (R() - .5) * s.bot * .4, ph: R() * 6, sp: .015 + R() * .02, s: 1.4 + R() * 1.4, a: .7 })), { color: [.85, .94, .98], y0: 0, y1: top, sway: 6, rise: false, alpha: .55 });
       trackGlow(motes.material); G.add(motes);
       w.updates.push((t, o) => { const I = o.shaftI ? o.shaftI[i] ?? s.base : s.base; m.uniforms.uI.value = I; m.uniforms.uTime.value = t; hole.material.opacity = .45 + .55 * I; pool.material.opacity = .55 * I; motes.material.uniforms.uAlpha.value = .55 * I; });
+      if (s.id === 'oculus') {   // the Assembly's hanging orb lamp over the rite (from the reference painting)
+        const oy = top - 150, orbM = new THREE.MeshStandardMaterial({ color: 0xf7f3ea, emissive: 0xfff2dc, emissiveIntensity: 1, roughness: .3 });
+        const orb = new THREE.Mesh(new THREE.SphereGeometry(24, 28, 20), orbM); orb.position.set(s.x, oy, z); G.add(orb);
+        const metal = new THREE.MeshStandardMaterial({ color: 0x9a9890, roughness: .5, metalness: .6 });
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, top - oy - 24, 6), metal); rod.position.set(s.x, (top + oy + 24) / 2, z); G.add(rod);
+        [0, Math.PI / 2].forEach(r => { const ring = new THREE.Mesh(new THREE.TorusGeometry(24.6, .9, 6, 40), metal); ring.rotation.y = r; ring.position.copy(orb.position); G.add(ring); });
+        const eq = new THREE.Mesh(new THREE.TorusGeometry(24.6, .9, 6, 40), metal); eq.rotation.x = Math.PI / 2; eq.position.copy(orb.position); G.add(eq);
+        const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xfff0d8, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); halo.position.copy(orb.position); halo.scale.set(150, 150, 1); G.add(halo);
+        w.updates.push((t, o) => { const I = o.shaftI ? o.shaftI[i] ?? s.base : s.base; orbM.emissiveIntensity = .4 + 2.4 * I; halo.material.opacity = .25 + .7 * I; });
+        addLight(w, { kind: 'point', x: s.x, y: oy, z: z + 40, color: 0xfff0dc, dist: 700, decay: 1.2, weight: 3, I: (t, o) => 600 + 2200 * (o.shaftI ? o.shaftI[i] ?? s.base : s.base) });
+      }
       addLight(w, { kind: 'spot', x: s.x, y: top, z, ty: 0, color: 0xcfe3ee, dist: top * 2.2, decay: 1.5, angle: Math.atan2(s.bot * .9, top), weight: 1, I: (t, o) => 3.2e4 * (o.shaftI ? o.shaftI[i] ?? s.base : s.base) });
     });
   }
