@@ -32,4 +32,4 @@ def make(src, box, out, size, radius, mean, contrast):
 R = 'reference/'
 make(R + 'dwellings-by-water.jpg', (480, 755, 1180, 935), 'assets/tex-masonry.png', (1024, 256), 40, .62, 1.0)
 make(R + 'inscribed-gate-hall.jpg', (1250, 0, 1672, 250), 'assets/tex-rock.png', (512, 304), 30, .5, 1.1)
-make(R + 'inscribed-wall-light.jpg', (900, 1100, 1300, 1560), 'assets/tex-inscription.png', (512, 576), 45, .62, 1.25)
+make(R + 'inscribed-wall-light.jpg', (900, 1100, 1300, 1560), 'assets/tex-inscription.png', (512, 576), 45, .62, 1.0)

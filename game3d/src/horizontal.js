@@ -77,7 +77,7 @@ export function buildHorizontal(name, D, X) {
       for (let y = 0; y < top;) {
         const bh = Math.min(top - y, 50 + R() * 170); if (bh < 20) break;
         const g = worldUVBox(cw - 3, bh - 3, 40 + R() * 30); g.translate(cx, y + bh / 2, zb + (R() - .5) * 14);
-        const k = R() < .22 && bh > 60 && cw > 90 ? 2 : R() < .5 ? 0 : 1; geos[k].push(g); y += bh;
+        const k = R() < .176 && bh > 60 && cw > 90 ? 2 : R() < .5 ? 0 : 1; geos[k].push(g); y += bh;
       }
     }
     geos.forEach((list, k) => { if (list.length) G.add(new THREE.Mesh(mergeSafe(list), masonryMat(k, 0xc3d2dc))); });
