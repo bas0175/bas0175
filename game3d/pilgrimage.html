@@ -372,7 +372,7 @@ const A={
     this.reverbIn=c.createGain();
     for(const k in SPACES){const cv=c.createConvolver();cv.buffer=this.makeIR(SPACES[k].rt);const g=c.createGain();g.gain.value=0;this.reverbIn.connect(cv);cv.connect(g);g.connect(this.master);this.convGain[k]=g;}
     const nb=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;this.noiseBuf=nb;
-    this.startAmbience();this.setSpace(state.zone);
+    this.startAmbience();this.setSpace(state.zone);this.loadDrips();
   },
   makeIR(rt){
     const c=this.ctx,sr=c.sampleRate,len=Math.floor(sr*rt),b=c.createBuffer(2,len,sr);
@@ -497,9 +497,21 @@ const A={
     const {pan,gain}=near?this.pos(near.x+near.w/2):{pan:0,gain:0},t=this.ctx.currentTime;
     this.wf.g.gain.setTargetAtTime(state.mode==='play'||state.mode==='dialog'?.22*gain*gain:0,t,.2);if(this.wf.p.pan)this.wf.p.pan.setTargetAtTime(pan,t,.2);
   },
+  // Drips: recorded cave drips (sounds/game/drip-1..5, built into the file) when present, else the synth placeholder.
+  // A random one each time, never the same twice running, with a little pitch and level variation. The recordings
+  // carry their own cave tail, so they get only a touch of the game's reverb.
+  drips:[],lastDrip:-1,
+  loadDrips(){const L=window.EMBEDDED_SOUNDS&&window.EMBEDDED_SOUNDS.drip;if(!L||!this.ctx)return;
+    L.forEach((u,i)=>fetch(u).then(r=>r.arrayBuffer()).then(b=>this.ctx.decodeAudioData(b)).then(buf=>{this.drips[i]=buf;}).catch(()=>{}));},
   drip(x){
     if(!this.ctx||this.ctx.state!=='running')return;
-    const c=this.ctx,t=c.currentTime,{pan,gain}=this.pos(x),o=this.out(pan,gain*.1,1);const f=900+Math.random()*1500;this.tone(o,t,f,.08,1,.002,f*.55);
+    const c=this.ctx,t=c.currentTime,{pan,gain}=this.pos(x);
+    if(this.bank.drip){this.playBank('drip',{x});return;}
+    const D=this.drips.filter(Boolean);
+    if(D.length){let i=Math.floor(Math.random()*D.length);if(D.length>1&&i===this.lastDrip)i=(i+1)%D.length;this.lastDrip=i;
+      const src=c.createBufferSource();src.buffer=D[i];src.playbackRate.value=.94+Math.random()*.12;
+      src.connect(this.out(pan,gain*(.35+Math.random()*.25),.12));src.start(t);return;}
+    const o=this.out(pan,gain*.1,1);const f=900+Math.random()*1500;this.tone(o,t,f,.08,1,.002,f*.55);
   },
   playBank(name,p){
     const c=this.ctx,src=c.createBufferSource();src.buffer=this.bank[name];
@@ -1535,7 +1547,7 @@ function update(dt){
     openDialog(state.loop===2&&!state.stores?[{who:'You',text:'Torven asks for your counsel. He says the whole community is struggling for food.'},{who:'Father',text:'Then it is not only us.'},{who:'Father',text:'Rest now. I will think on what to tell him.'}]:state.stores?[{who:'Father',text:'You came back. And with stores.'},{who:'Father',text:'Rest now. The light is home, and so are you.'}]:[{who:'Father',text:'You have brought the light home.'}],()=>beginReturn());return;}
   if(state.zone==='outpost'&&Math.random()<dt*.5*state.loop)A.drip(170+Math.random()*890);
   }
-  if((state.zone==='cave'||(WORLD==='west'&&inCave(player.x)))&&Math.random()<dt*1.4)A.drip(player.x+(Math.random()-.5)*700);
+  if((state.zone==='cave'||(WORLD==='west'&&inCave(player.x)))&&Math.random()<dt*(A.drips.length?.75:1.4))A.drip(player.x+(Math.random()-.5)*700);
   nearStone=findNearStone();
   camX=lerp(camX,clamp(player.x+12-W*.42,0,WORLD_W-W),.12);
   setHint(t);
@@ -2044,7 +2056,7 @@ function toggleMute(){A.muted=!A.muted;muteBtn.textContent=A.muted?'Unmute':'Mut
 muteBtn.onclick=toggleMute;
 document.getElementById('vol').oninput=e=>{A.vol=+e.target.value;A.setLevel();};
 
-const BANK_EVENTS=[['voice.tone','Her voice (looped, pitched)'],['call.hum','Wall hum (pitched)'],['step','Footstep'],['jump','Jump'],['land','Land'],['stone.strike','Stone strike (pitched)'],['stone.turn','Stone turn'],['relation.lit','Relation lit'],['threshold.open','Threshold opens'],['ritual.intone','Intone (looped, pitched)'],['ritual.choir','Order answers (pitched)'],['loop.return','Return']];
+const BANK_EVENTS=[['voice.tone','Her voice (looped, pitched)'],['call.hum','Wall hum (pitched)'],['step','Footstep'],['drip','Cave drip (replaces the five recorded drips)'],['jump','Jump'],['land','Land'],['stone.strike','Stone strike (pitched)'],['stone.turn','Stone turn'],['relation.lit','Relation lit'],['threshold.open','Threshold opens'],['ritual.intone','Intone (looped, pitched)'],['ritual.choir','Order answers (pitched)'],['loop.return','Return']];
 document.getElementById('bankBody').innerHTML=BANK_EVENTS.map(([n,d])=>`<tr data-n="${n}"><td><code>${n}</code><div class="d">${d}</div></td><td class="st">synth</td><td style="white-space:nowrap"><label class="btn sm">Load<input type="file" accept="audio/*" hidden></label> <button class="btn sm" data-a="test" type="button">▶</button> <button class="btn sm" data-a="clear" type="button">×</button></td></tr>`).join('');
 document.getElementById('bankBody').addEventListener('change',async ev=>{
   const tr=ev.target.closest('tr'),f=ev.target.files&&ev.target.files[0];if(!tr||!f)return;ev.target.value='';
