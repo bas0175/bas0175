@@ -3,7 +3,7 @@
 import * as THREE from 'three';
 import { makeWorld, addLight, trackGlow } from './core.js';
 import { makeNoise, mulberry32, smooth, clamp, lerp } from './util.js';
-import { mergeSafe, caveRockMat, BUMP, rockMat, glowTex, driftPoints } from './materials.js';
+import { mergeSafe, caveRockMat, BUMP, rockMat, glowTex, driftPoints, canvasTex, masonryMat, worldUVBox } from './materials.js';
 import { loftRock } from './rockgen.js';
 
 export function buildVertical(name, S, kind) {
@@ -58,16 +58,32 @@ export function buildVertical(name, S, kind) {
   // loose rock on the floor
   { const list = []; for (let i = 0; i < 26; i++) { const sz = 10 + R() * 40; const g = new THREE.IcosahedronGeometry(sz, 1); g.scale(1 + R(), .5 + R() * .4, 1); g.translate(R() * S.W, -S.H + sz * .3, ZB + R() * (ZF - ZB) * .8); list.push(g); } G.add(new THREE.Mesh(mergeSafe(list), rockMat)); }
 
-  // the arch at the top, its lamp, and light coming through the doorway
+  // the doorway at the top, its old lamp on a pedestal, and light coming through
   {
     const ax = kind === 'descent' ? S.W : 0, ay = T.y, dir = kind === 'descent' ? -1 : 1;
-    const path = new THREE.CurvePath(); const a = new THREE.Vector3(ax + dir * 4, -ay, 0), b = new THREE.Vector3(ax + dir * 4, -(ay - 96), 0), c = new THREE.Vector3(ax + dir * 4, -(ay - 134), 0), d = new THREE.Vector3(ax - dir * 30, -(ay - 136), 0);
-    path.add(new THREE.LineCurve3(a, b)); path.add(new THREE.QuadraticBezierCurve3(b, c, d));
-    G.add(new THREE.Mesh(new THREE.TubeGeometry(path, 24, 6, 6), new THREE.MeshStandardMaterial({ color: 0x7d929c, roughness: .8 })));
-    const lx = ax + dir * 30, ly = ay - 92;
-    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffb060, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx, -ly, 10); f.scale.set(50, 50, 1); G.add(f);
-    w.updates.push(t => { const fl = .85 + .15 * Math.sin(t * 7) * Math.sin(t * 3.1); f.material.opacity = fl; });
-    addLight(w, { kind: 'point', x: lx, y: -ly, z: 40, color: 0xffa860, dist: 520, decay: 1.25, weight: 2, I: t => 1100 * (.85 + .15 * Math.sin(t * 7) * Math.sin(t * 3.1)) });
+    // the lamp: a globe like the others on the road, but old: the glass is cracked and grimed. At the top of the
+    // descent only one half of it still lights; at the top of the shaft it sputters, dropping almost out now and then.
+    const lx = ax + dir * 30, ly = ay - 92, half = kind === 'descent';
+    const glassTex = canvasTex(256, 128, (g, W, H) => {
+      const r = mulberry32(half ? 31 : 32);
+      g.fillStyle = half ? '#fff0d6' : '#ffe4c0'; g.fillRect(0, 0, W, H);
+      if (half) { const gr = g.createLinearGradient(W * .38, 0, W * .62, 0); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(12,10,8,1)'); g.fillStyle = gr; g.fillRect(W * .38, 0, W * .62, H); }
+      for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(60,48,36,${.15 + r() * .35})`; g.beginPath(); g.arc(r() * W, r() * H, 3 + r() * 14, 0, 7); g.fill(); }   // grime
+      g.strokeStyle = 'rgba(20,14,10,.9)'; g.lineWidth = 1.6;
+      for (let c = 0; c < 5; c++) { let x = r() * W, y = r() * H; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 7; k++) { x += (r() - .5) * 46; y += (r() - .5) * 30; g.lineTo(x, y); if (r() < .3) { g.moveTo(x, y); } } g.stroke(); }   // cracks
+    });
+    const glass = new THREE.MeshStandardMaterial({ color: 0x8a8274, roughness: .55, emissive: 0xffc890, emissiveMap: glassTex, emissiveIntensity: 1.4 });
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(9.5, 28, 18), glass); orb.position.set(lx, -ly, -24); orb.rotation.y = half ? Math.PI * .55 : .4; G.add(orb);
+    // on a worn stone pedestal (like the road's lamp posts), leaning a little
+    const ped = new THREE.Group(), stone = masonryMat(1, 0x6f7a82), ph = 92 - 9.5;
+    [[22, 10, 22, 5], [14, ph - 18, 14, 10 + (ph - 18) / 2], [20, 8, 20, ph - 4]].forEach(([w2, h2, d2, y2]) => { const b = worldUVBox(w2, h2, d2); b.translate(0, y2, 0); ped.add(new THREE.Mesh(b, stone)); });
+    ped.position.set(lx, -ay, -24); ped.rotation.z = half ? .025 : -.03; G.add(ped);
+    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffb060, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx + (half ? dir * -4 : 0), -ly, -18); f.scale.set(34, 34, 1); G.add(f);
+    // half: steady but weak. sputter: a dim buzz with dropouts, a few times a minute nearly out
+    const fl = t => half ? .78 + .06 * Math.sin(t * 5.3) * Math.sin(t * 1.7)
+      : (() => { const n = Math.sin(t * 13.1) * Math.sin(t * 7.7 + 1) * Math.sin(t * 2.3); const drop = Math.sin(t * .37) > .93 || Math.sin(t * 1.9 + 2) > .985 ? .12 : 1; return (.62 + .18 * n) * drop; })();
+    w.updates.push(t => { const k = fl(t); f.material.opacity = .25 + .55 * k; glass.emissiveIntensity = .3 + 1.3 * k; });
+    addLight(w, { kind: 'point', x: lx + (half ? -dir * 10 : 0), y: -ly, z: 40, color: 0xffa860, dist: 460, decay: 1.3, weight: 2, I: t => 620 * fl(t) });
     // the doorway's light: a cold spot reaching down into the chasm
     addLight(w, { kind: 'spot', x: ax - dir * 120, y: -(ay - 110), z: 120, ty: -(ay + 900), color: 0xd4e8f2, dist: 1800, decay: 1.1, angle: .55, weight: 3, I: () => 1500 });
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(260, 150), new THREE.MeshBasicMaterial({ map: glowTex, color: 0xd7ecf6, transparent: true, opacity: .5, blending: THREE.AdditiveBlending, depthWrite: false }));
