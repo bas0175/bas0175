@@ -1495,12 +1495,13 @@ function caption(text,dur=7){state.caption=text;state.captionUntil=nowS()+dur;}
 function nearAltar(){return WORLD==='east'&&ritual.done&&state.door2Open&&!state.gathered&&Math.abs(player.x+player.w/2-ALTAR.x)<66;}
 function closeReturnBells(){state.returnBells=true;state.door1WOpen=false;phrase=null;stones.forEach(s=>{s.idx=s.start;s.last=-1e9;});renderRelations();}
 function gather(){state.carrying=true;state.gathered=true;A.fire('item.gather',{x:ALTAR.x},'world');closeReturnBells();A.fire('door.close',{x:DOOR1W.x},'world');
-  if(state.loop===3&&state.stores&&!state.story.dined){openDialog(DINNER.invite,()=>enterDinner());return;}
+  if(DINNER_ON&&state.loop===3&&state.stores&&!state.story.dined){openDialog(DINNER.invite,()=>enterDinner());return;}
   caption('Carry the light home. Far back on the road, a bell door has fallen shut.');}
 
 /* ---------- Torven's house (cycle 3): dinner with his family while the party clears the road ----------
    A fixed scene: dialogue, then the children sing a short blessing and she sings it back (keys 1-7), then more talk,
    and she wakes in the morning by the alcove with the road open. No way to fail: after three misses they let it go. */
+const DINNER_ON=false;   // parked until the house has its own art; set true to bring the scene back
 const DINNER={
   invite:[{who:'Torven',text:'Veyra. The party will not have your road open before morning.'},
     {who:'Torven',text:'Eat with us tonight. Mira will not forgive me if I let you sleep on the hall floor.'}],
@@ -2108,7 +2109,6 @@ const SCENES=[
   ['Deep ways · Near the end',()=>{toWest(0);placeAt(1200,-1);}],
   ['Cycle 3 · Arrival at the Assembly',()=>{toWest(0);placeAt(1200,-1);arriveFromWest();}],
   ['Cycle 3 · Rite (after arrival)',()=>{setCycle(3,{rumbled:1,collapseSeen:1,mapGiven:1,arrived:1,caveCleared:1});state.stores=true;openAll();Object.assign(state,{door2Open:true,lift2:1});greeted();state.talked.home=1;buildFigures();placeAt(CIRCLE.x-170);}],
-  ['Cycle 3 · Dinner at Torven\'s',()=>{setCycle(3,{rumbled:1,collapseSeen:1,mapGiven:1,arrived:1,caveCleared:1});state.stores=true;openAll();greeted();riteDone();buildFigures();placeAt(ALTAR.x-130);gather();}],
   ['Cycle 3 · Home with stores',()=>{setCycle(3,{rumbled:1,collapseSeen:1,mapGiven:1,arrived:1,caveCleared:1});state.stores=true;openAll();greeted();riteDone();homeward();buildFigures();placeAt(FATHER_X+260,-1);}],
 ];
 function openJump(){if(!['play','paused','title','end'].includes(state.mode))return;state.jumpFrom=state.mode;if(state.mode==='play'){state.mode='paused';pausedAt=nowS();for(const k in keys)keys[k]=false;}
