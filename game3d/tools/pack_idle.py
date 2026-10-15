@@ -4,7 +4,7 @@
 import json, numpy as np
 from PIL import Image
 N = 6; FIG_H = 352
-FLIP = {3}                                  # poses mirrored, so she faces the other way in them                          # her standing height in sheet pixels (175 at the model sheet's .5, doubled)
+FLIP = {4, 5, 6}                            # poses mirrored, so she faces the other way in them
 frames = [Image.open(f'sprites/idle/pose-{i}.png').convert('RGBA') for i in range(1, N + 1)]
 A = [np.asarray(f)[:, :, 3] > 128 for f in frames]
 k = FIG_H / np.mean([np.where(a)[0].max() - np.where(a)[0].min() for a in A])
