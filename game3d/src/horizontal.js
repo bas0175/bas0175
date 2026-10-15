@@ -16,7 +16,9 @@ export function buildHorizontal(name, D, X) {
   const caves = D.caves || [], grove = D.grove;
   const caveK = x => { let k = 0; for (const [a, b] of caves) k = Math.max(k, smooth(a - 160, a + 120, x) * (1 - smooth(b - 120, b + 160, x))); return k; };
   const groveK = x => grove ? smooth(grove.a - 120, grove.a + 260, x) * (1 - smooth(grove.b - 220, grove.b + 260, x)) : 0;
-  const hallK = x => (X.east && X.east.halls || []).reduce((k, [a, w]) => Math.max(k, smooth(a - 140, a + 10, x) * (1 - smooth(a + w - 10, a + w + 140, x))), 0);
+  // the rooms behind doorways (the outpost's and the Assembly's): scenery keeps out of them
+  const inRoom = (x, z) => z < -150 && [...(X.east && X.east.halls || []), ...(X.east && X.east.arches || [])].some(([a, w]) => x > a - 60 && x < a + w + 60);
+  const hallK = x => [...(X.east && X.east.halls || []), ...(X.east && X.east.arches || [])].reduce((k, [a, w]) => Math.max(k, smooth(a - 140, a + 10, x) * (1 - smooth(a + w - 10, a + w + 140, x))), 0);
   const depth = x => lerp(lerp(560, 330, caveK(x)), 1050, groveK(x));
   const roof = x => lerp(lerp(400, 355, caveK(x)), 900, groveK(x)) + N(x * .004, 3, 1) * 30;
   w.roof = roof; w.depth = depth;
@@ -182,12 +184,13 @@ export function buildHorizontal(name, D, X) {
         if (R() < .35) { p.z = 70 + R() * 160; M.compose(p, q, s); fgList.push(M.clone()); continue; }
         p.z = -300 - R() * Dd * .4;
       }
+      if (inRoom(p.x, p.z)) continue;
       M.compose(p, q, s); im.setMatrixAt(k++, M);
     }
     im.count = k; G.add(im);
     if (fgList.length) { const fim = new THREE.InstancedMesh(cone, new THREE.MeshStandardMaterial({ color: 0x1b252d, roughness: .95, flatShading: true }), fgList.length); fgList.forEach((m, i) => fim.setMatrixAt(i, m)); w.fg.add(fim); }
     const boul = [];
-    for (let i = 0; i < (X1 - X0) / 90; i++) { const x = X0 + R() * (X1 - X0); if (!isFloorX(x) || groveK(x) > .3) continue; const sz = 18 + R() * 60, g = rockGeo(sz * (1 + R()), sz * (.6 + R()), sz, 900 + i); g.translate(x, -5, -150 - R() * depth(x) * .6); boul.push(g); }
+    for (let i = 0; i < (X1 - X0) / 90; i++) { const x = X0 + R() * (X1 - X0); if (!isFloorX(x) || groveK(x) > .3) continue; const sz = 18 + R() * 60, g = rockGeo(sz * (1 + R()), sz * (.6 + R()), sz, 900 + i); const bz = -150 - R() * depth(x) * .6; if (inRoom(x, bz - sz)) continue; g.translate(x, -5, bz); boul.push(g); }
     mergeAdd(boul, rockMat);
   }
 
@@ -195,10 +198,35 @@ export function buildHorizontal(name, D, X) {
   if (X.east) {
     const E = X.east, list = [], ins = [];
     // the outpost's dwelling wall, with arched doorways
-    { const g = worldUVBox(1400, 400, 60); g.translate(500, 200, -200); list.push(g);
-      const arch = new THREE.MeshBasicMaterial({ color: 0x020507 }), frameMat = masonryMat(1, 0xc8d4dc);
+    { // the wall itself: one slab with the doorways and a few small windows cut through it
+      const WIN = [[228, 40, 50], [430, 34, 44], [828, 40, 50], [1112, 34, 44]];   // x, width, height (sills at 250)
+      const wall = new THREE.Shape(); wall.moveTo(-200, 0); wall.lineTo(1200, 0); wall.lineTo(1200, 400); wall.lineTo(-200, 400); wall.closePath();
+      E.arches.forEach(([x, aw]) => { const hh = 110, top = hh + aw * .45, h = new THREE.Path(); h.moveTo(x, 0); h.lineTo(x + aw, 0); h.lineTo(x + aw, hh); h.quadraticCurveTo(x + aw, top, x + aw / 2, top); h.quadraticCurveTo(x, top, x, hh); h.closePath(); wall.holes.push(h); });
+      WIN.forEach(([x, ww, wh]) => { const h = new THREE.Path(); h.moveTo(x, 250); h.lineTo(x + ww, 250); h.lineTo(x + ww, 250 + wh - ww / 2); h.quadraticCurveTo(x + ww, 250 + wh, x + ww / 2, 250 + wh); h.quadraticCurveTo(x, 250 + wh, x, 250 + wh - ww / 2); h.closePath(); wall.holes.push(h); });
+      const wg = new THREE.ExtrudeGeometry(wall, { depth: 60, bevelEnabled: false, curveSegments: 10 }); wg.translate(0, 0, -230);
+      { const uv = wg.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 160, uv.getY(i) / 160); }
+      list.push(wg);
+      const frameMat = masonryMat(1, 0xc8d4dc), inner = [], lampOrb = new THREE.MeshStandardMaterial({ color: 0xfff1da, emissive: 0xffd9a8, emissiveIntensity: 1.5, roughness: .4 });
+      const box = (w2, h2, d2, x, y, z) => { const g = worldUVBox(w2, h2, d2); g.translate(x, y, z); inner.push(g); };
+      // behind each doorway, rooms running back into the rock: a passage, a side door, and in two of them a lamp
+      E.arches.forEach(([x, aw], i) => {
+        const hh = 110, top = hh + aw * .45, L = [300, 240, 330][i % 3], z0 = -230, cx = x + aw / 2;
+        box(aw + 60, 8, L, cx, -4, z0 - L / 2); box(30, top + 40, L, x - 15, (top + 40) / 2, z0 - L / 2); box(30, top + 40, L, x + aw + 15, (top + 40) / 2, z0 - L / 2);
+        box(aw + 60, 30, L, cx, top + 25, z0 - L / 2); box(aw + 60, top + 40, 30, cx, (top + 40) / 2, z0 - L - 15);
+        box(aw * .45, hh * .9, 12, x + aw * (i % 2 ? .75 : .25), hh * .45, z0 - L * .6);   // a doorway further in, half in shadow
+        if (i !== 1) {
+          const lx = x + aw * (i ? .2 : .8), ly = 92, lz = z0 - L * .45;
+          const orb = new THREE.Mesh(new THREE.SphereGeometry(4.5, 16, 12), lampOrb); orb.position.set(lx, ly, lz); G.add(orb);
+          const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd7a0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: .8 })); glow.position.set(lx, ly, lz + 4); glow.scale.set(28, 28, 1); G.add(glow);
+          addLight(w, { kind: 'point', x: lx, y: ly, z: lz + 30, color: 0xffa860, dist: 380, decay: 1.4, weight: .9, I: t => 280 * (.92 + .08 * Math.sin(t * 2.1 + i)) });
+        }
+      });
+      // behind the windows, a warm room light
+      WIN.forEach(([x, ww, wh], i) => { const gl = new THREE.Mesh(new THREE.PlaneGeometry(ww * 2.4, wh * 1.8), new THREE.MeshBasicMaterial({ map: glowTex, color: i % 2 ? 0xffc890 : 0xffb070, transparent: true, opacity: i === 2 ? .35 : .7, blending: THREE.AdditiveBlending, depthWrite: false }));
+        gl.position.set(x + ww / 2, 250 + wh / 2, -246); G.add(gl);
+        box(ww + 40, wh + 40, 10, x + ww / 2, 250 + wh / 2, -262); });   // the room's back wall, close behind
+      G.add(new THREE.Mesh(mergeSafe(inner), masonryMat(0, 0x8a98a4)));
       E.arches.forEach(([x, aw]) => { const s = new THREE.Shape(), hh = 110, top = hh + aw * .45; s.moveTo(0, 0); s.lineTo(0, hh); s.quadraticCurveTo(0, top, aw / 2, top); s.quadraticCurveTo(aw, top, aw, hh); s.lineTo(aw, 0); s.closePath();
-        const m = new THREE.Mesh(new THREE.ShapeGeometry(s), arch); m.position.set(x, 0, -168); G.add(m);
         const path = new THREE.CurvePath(); path.add(new THREE.LineCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, hh, 0))); path.add(new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, hh, 0), new THREE.Vector3(0, top, 0), new THREE.Vector3(aw / 2, top, 0))); path.add(new THREE.QuadraticBezierCurve3(new THREE.Vector3(aw / 2, top, 0), new THREE.Vector3(aw, top, 0), new THREE.Vector3(aw, hh, 0))); path.add(new THREE.LineCurve3(new THREE.Vector3(aw, hh, 0), new THREE.Vector3(aw, 0, 0)));
         const f = new THREE.Mesh(new THREE.TubeGeometry(path, 40, 7, 6), frameMat); f.position.set(x, 0, -166); G.add(f); });
       const sh = worldUVBox(80, 10, 50); sh.translate(E.shelfX, Y(334), -40); list.push(sh); }
