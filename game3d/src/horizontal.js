@@ -19,12 +19,15 @@ export function buildHorizontal(name, D, X) {
   const depth = x => lerp(lerp(560, 330, caveK(x)), 1050, groveK(x));
   const roof = x => lerp(lerp(400, 355, caveK(x)), 900, groveK(x)) + N(x * .004, 3, 1) * 30;
   w.roof = roof; w.depth = depth;
+  // stretches of wall kept plain (no inscriptions): the bell gate, and the Assembly gate where the call is sung
+  const isPlain = x => !!X.east && [X.east.bellZone, X.east.gateZone].some(z => z && x > z[0] && x < z[1]);
 
   // ---------- floors and the gaps between them ----------
   const floors = D.floors.slice().sort((a, b) => a[0] - b[0]);
   const gaps = []; for (let i = 0; i < floors.length - 1; i++) if (floors[i + 1][0] > floors[i][1] + 2) gaps.push([floors[i][1], floors[i + 1][0], i]);
   const lipW = z => .1 + .9 * smooth(30, 170, Math.abs(z - 10));
   const lip = (g, z, side) => (side ? g[1] : g[0]) + (N(z * .011, g[2] * 3.1 + side * 7, 7.7) * 60 + N(z * .05, g[2] * 1.3 + side, 2.2) * 12) * lipW(z);
+  const lipAt = lip;
   const gapsNear = x => gaps.filter(g => x > g[0] - 120 && x < g[1] + 120);
   const isFloorX = x => floors.some(([a, b]) => x >= a && x <= b);
 
@@ -77,7 +80,7 @@ export function buildHorizontal(name, D, X) {
       for (let y = 0; y < top;) {
         const bh = Math.min(top - y, 50 + R() * 170); if (bh < 20) break;
         const g = worldUVBox(cw - 3, bh - 3, 40 + R() * 30); g.translate(cx, y + bh / 2, zb + (R() - .5) * 14);
-        const plain = X.east && X.east.bellZone && cx > X.east.bellZone[0] && cx < X.east.bellZone[1];
+        const plain = isPlain(cx);
         const k = !plain && R() < .176 && bh > 60 && cw > 90 ? 2 : R() < .5 ? 0 : 1; geos[k].push(g); y += bh;
       }
     }
@@ -169,11 +172,11 @@ export function buildHorizontal(name, D, X) {
       const sh = worldUVBox(80, 10, 50); sh.translate(E.shelfX, Y(334), -40); list.push(sh); }
     // inscription walls behind the bell gate and the Assembly gate
     const panelTex = (w2, h2) => { const t = new THREE.TextureLoader().load(TEX.INS_URL); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w2 / 300, h2 / 340); t.anisotropy = 8; return t; };
-    E.walls.forEach(([x, ww], wi) => { const g = worldUVBox(ww, 420, 50); g.translate(x + ww / 2, 210, -175); list.push(g); if (E.bellZone && x >= E.bellZone[0] && x < E.bellZone[1]) return;   // the bell gate's wall: plain, so the bells and their lines read
+    E.walls.forEach(([x, ww], wi) => { const g = worldUVBox(ww, 420, 50); g.translate(x + ww / 2, 210, -175); list.push(g); if (isPlain(x + 10)) return;   // the walls at the bell gate and the Assembly gate stay plain, so the bells, the call and their lines read
       const m = new THREE.Mesh(new THREE.PlaneGeometry(ww - 20, 140), new THREE.MeshStandardMaterial({ map: panelTex(ww - 20, 140), roughness: .85, emissive: 0x6fa0bc, emissiveMap: panelTex(ww - 20, 140), emissiveIntensity: .1 })); m.position.set(x + ww / 2, Y(171), -148); G.add(m); });
-    if (E.gateInscr) { const [x, ww] = E.gateInscr; const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, 150), new THREE.MeshStandardMaterial({ map: panelTex(ww, 150), roughness: .85 })); m.position.set(x + ww / 2, Y(345), -148); G.add(m); }
+    if (E.gateInscr && !isPlain(E.gateInscr[0] + E.gateInscr[1] / 2)) { const [x, ww] = E.gateInscr; const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, 150), new THREE.MeshStandardMaterial({ map: panelTex(ww, 150), roughness: .85 })); m.position.set(x + ww / 2, Y(345), -148); G.add(m); }
     // lintels over the doors, the altar
-    E.lintels.forEach(([cx, y], i) => { const top = roof(cx) + 40, g = worldUVBox(90, top - Y(y), 150); g.translate(cx, (top + Y(y)) / 2, -40); (E.bellZone && cx > E.bellZone[0] && cx < E.bellZone[1] ? list : ins).push(g); });
+    E.lintels.forEach(([cx, y], i) => { const top = roof(cx) + 40, g = worldUVBox(90, top - Y(y), 150); g.translate(cx, (top + Y(y)) / 2, -40); (isPlain(cx) ? list : ins).push(g); });
     { const a = E.altar, g = worldUVBox(a.w, a.h, 70); g.translate(a.x + a.w / 2 - a.w / 2, Y(a.y + a.h / 2), -10); ins.push(g); }
     mergeAdd(list, masonryMat(0, 0xaebdc8)); mergeAdd(ins, masonryMat(2, 0xc0ccd5));
   }
@@ -184,13 +187,27 @@ export function buildHorizontal(name, D, X) {
     const wm = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uLen: { value: len } }, transparent: true, depthWrite: false,
       vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
       fragmentShader: `varying vec2 vUv;uniform float uTime,uLen;float h(float x){return fract(sin(x*91.3)*47453.1);}
-        void main(){float x=vUv.x*uLen,y=vUv.y;float lane=floor(y*7.0);float sp=36.0+h(lane)*30.0;
-        float s=fract((x-uTime*sp)/(40.0+h(lane+2.0)*50.0)+h(lane+5.0));float glint=smoothstep(0.0,0.05,s)*smoothstep(0.22,0.06,s)*step(0.35,h(lane+9.0+floor((x-uTime*sp)/80.0)));
+        void main(){float x=vUv.x*uLen,y=vUv.y;float lane=floor(y*12.0);float sp=36.0+h(lane)*30.0;
+        float s=fract((x-uTime*sp)/(30.0+h(lane+2.0)*40.0)+h(lane+5.0));float glint=smoothstep(0.0,0.03,s)*smoothstep(0.12,0.035,s)*step(0.35,h(lane+9.0+floor((x-uTime*sp)/80.0)));
         float edge=smoothstep(0.0,0.18,y)*smoothstep(1.0,0.82,y);vec3 c=mix(vec3(0.03,0.05,0.07),vec3(0.10,0.17,0.22),y)+vec3(0.75,0.86,0.92)*glint*0.55*edge;
         gl_FragColor=vec4(c,0.92*edge+0.05);}` });
     const water = new THREE.Mesh(new THREE.PlaneGeometry(len, 1), wm); water.rotation.x = -Math.PI / 2; water.position.set(a + len / 2, 1.2, 46); G.add(water);
     const cg = worldUVBox(len + 10, 6, 8); cg.translate(a + len / 2, 2, 22); mergeAdd([cg], masonryMat(0, 0xc8d4dc));
     const cb = worldUVBox(len + 10, 6, 8); cb.translate(a + len / 2, 2, 70); const curbB = new THREE.Mesh(cb, masonryMat(0, 0xc8d4dc)); G.add(curbB);
+    {   // the spill: a curtain of water over the crevice lip, falling into the dark
+      const fm = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        vertexShader: 'varying vec2 vUv;varying vec3 vP;void main(){vUv=uv;vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+        fragmentShader: `varying vec2 vUv;varying vec3 vP;uniform float uTime;float h(float x){return fract(sin(x*91.3)*47453.1);}
+          void main(){float e=smoothstep(0.0,0.2,vUv.x)*smoothstep(1.0,0.8,vUv.x);float col=floor(vUv.x*10.0);float s=fract(vP.y*0.008+uTime*(1.6+h(col)*0.7)+h(col+3.0));
+          float streak=smoothstep(0.0,0.08,s)*smoothstep(0.35,0.1,s);float fade=smoothstep(-700.0,-120.0,vP.y);gl_FragColor=vec4(vec3(0.72,0.88,0.95)*e*(0.3+0.85*streak)*fade,1.0);}` });
+      const gS = gaps.find(g => Math.abs(g[0] - b) < 20), lip = gS ? Math.max(lipAt(gS, 32, 0), lipAt(gS, 60, 0)) : b, curtain = new THREE.PlaneGeometry(1, 720, 1, 24); curtain.translate(0, -360, 0);
+      const front = new THREE.Mesh(curtain, fm); front.position.set(lip + 12, 2, 32); front.scale.x = 36; G.add(front);
+      const side = new THREE.Mesh(curtain, fm); side.rotation.y = Math.PI / 2; side.position.set(lip + 4, 2, 60); side.scale.x = 80; G.add(side);
+      const lipGlow = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTex, color: 0xbfe3f0, transparent: true, opacity: .35, blending: THREE.AdditiveBlending, depthWrite: false }));
+      lipGlow.rotation.x = -Math.PI / 2; lipGlow.position.set(lip - 6, 2, 60); lipGlow.scale.set(40, 90, 1); G.add(lipGlow);
+      w.updates.push(t => { fm.uniforms.uTime.value = t; });
+      addLight(w, { kind: 'point', x: lip + 10, y: -40, z: 90, color: 0x9cc8dc, dist: 360, decay: 1.4, weight: .4, I: () => 220 });
+    }
     w.updates.push((t, o) => { wm.uniforms.uTime.value = t; const width = 70 + 14 * (o.loop || 1); water.scale.y = width; water.position.z = 25 + width / 2; curbB.position.z = 25 + width - 70; });
   }
 
@@ -247,7 +264,7 @@ export function buildHorizontal(name, D, X) {
         void main(){float e=smoothstep(0.0,0.25,vUv.x)*smoothstep(1.0,0.75,vUv.x);float col=floor(vUv.x*14.0);float sp=1.4+h(col)*0.8;
         float s=fract(vP.y*0.006+uTime*sp+h(col+3.0));float streak=smoothstep(0.0,0.08,s)*smoothstep(0.35,0.1,s);
         float a=e*(0.10+0.55*streak*(0.5+0.5*h(col+7.0)));gl_FragColor=vec4(vec3(0.72,0.88,0.95)*a,1.0);}` });
-    (D.waterfalls || []).forEach(wf => {
+    (D.waterfalls || []).filter(wf => !wf.spill).forEach(wf => {
       const cx = wf.x + wf.w / 2, onFloor = isFloorX(cx), top = roof(cx) + 10, bot = onFloor ? 0 : -900, m = fallMat();
       const g = new THREE.PlaneGeometry(wf.w * 1.15, top - bot, 1, 20); g.translate(cx, (top + bot) / 2, -24);
       const curtain = new THREE.Mesh(g, m); G.add(curtain);
@@ -259,17 +276,22 @@ export function buildHorizontal(name, D, X) {
     });
   }
 
-  // ---------- crystals in the caves ----------
+  // ---------- crystals in the caves: half buried in the back wall, glowing out of rock sockets ----------
   {
-    const cg = []; const glow = [];
+    const cg = [], sockets = [], glow = []; w.crystals = [];
     (D.crystals || []).forEach((c, i) => {
-      const r = mulberry32(1200 + i), z = -40 - r() * 60;
-      [[-4, 0, 6], [0, -3, 9], [4, 1, 5]].forEach(([dx, dy, hh]) => { const g = new THREE.ConeGeometry(2.6, hh * 2.2, 5); g.rotateZ((r() - .5) * .6); g.translate(c.x + dx * 1.3, Y(c.y + dy) + hh * .6, z); cg.push(g); });
-      const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x96e1f0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); s.position.set(c.x, Y(c.y), z + 4); s.scale.set(60, 60, 1); G.add(s); glow.push({ s, i });
-      addLight(w, { kind: 'point', x: c.x, y: Y(c.y), z: z + 30, color: 0x8fdcef, dist: 260, decay: 1.5, weight: .5, I: t => 160 * (.6 + .3 * Math.sin(t * 1.6 + i)) });
+      const r = mulberry32(1200 + i), Yc = Y(c.y), z = -.9 * depth(c.x) + 26 + r() * 20;
+      w.crystals[i] = new THREE.Vector3(c.x, Yc, z);
+      const sk = rockGeo(22 + r() * 10, 14 + r() * 8, 18, 1300 + i, false); sk.translate(c.x, Yc - 4, z - 6); sockets.push(sk);
+      for (let k = 0; k < 5; k++) {   // crystals growing out of the socket, leaning out toward the room
+        const hh = 8 + r() * 14, g = new THREE.ConeGeometry(2.2 + r() * 1.8, hh * 2.2, 5); g.translate(0, hh * .9, 0);
+        g.rotateX(.5 + r() * .7); g.rotateZ((r() - .5) * 1.4); g.translate(c.x + (r() - .5) * 26, Yc + (r() - .5) * 12, z + 6 + r() * 6); cg.push(g);
+      }
+      const s2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x96e1f0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); s2.position.set(c.x, Yc + 4, z + 14); s2.scale.set(54, 54, 1); G.add(s2); glow.push({ s: s2, i });
+      addLight(w, { kind: 'point', x: c.x, y: Yc + 6, z: z + 50, color: 0x8fdcef, dist: 300, decay: 1.4, weight: .5, I: t => 200 * (.6 + .3 * Math.sin(t * 1.6 + i)) });
     });
-    if (cg.length) G.add(new THREE.Mesh(mergeSafe(cg), new THREE.MeshStandardMaterial({ color: 0xbff0fa, emissive: 0x7fd8ee, emissiveIntensity: 1.2, roughness: .3 })));
-    w.updates.push(t => glow.forEach(({ s, i }) => { s.material.opacity = .45 + .3 * Math.sin(t * 1.6 + i); }));
+    if (cg.length) { G.add(new THREE.Mesh(mergeSafe(cg), new THREE.MeshStandardMaterial({ color: 0xbff0fa, emissive: 0x7fd8ee, emissiveIntensity: 1.3, roughness: .25 }))); mergeAdd(sockets, caveRockMat, [.3, .36, .42]); }
+    w.updates.push(t => glow.forEach(({ s: sp, i }) => { sp.material.opacity = .4 + .25 * Math.sin(t * 1.6 + i); }));
   }
 
   // ---------- mist low in the chasms, dust in the air ----------

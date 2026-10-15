@@ -248,7 +248,7 @@ const E_WAYSTONES=[{x:3990,label:'the cave mouth'},{x:6660,label:'the far side o
 const E_PILLARS=[{x:2440,y:400,w:60,h:440},{x:3500,y:400,w:72,h:440},{x:3640,y:350,w:72,h:490},{x:3780,y:410,w:72,h:430},
   {x:4950,y:420,w:70,h:420},{x:6380,y:300,w:100,h:540}];
 const E_PLATS=[{x:2060,y:370,w:120},{x:2250,y:300,w:140}];   // stone shelves jutting from the chasm wall: land on them from above, jump up through them
-const E_WATERFALLS=[{x:3195,w:36}];   // both fall into chasms                               // falls from the roof into the chasm, between the two shelves
+const E_WATERFALLS=[{x:1152,w:30,spill:true},{x:3195,w:36}];   // the first is the outpost stream spilling into the first crevice   // both fall into chasms                               // falls from the roof into the chasm, between the two shelves
 const E_FLOORS=[[-200,1150],[1260,1560],[1720,2000],[2560,3150],[3300,3420],[3900,4900],[5070,5880],[6560,5480+CV],[5570+CV,5900+CV],[5990+CV,6260+CV],[6350+CV,12500]];   // gaps are crevasses
 const E_ROCKS=[{x:1400,y:GROUND-90,w:62,h:90},{x:3030,y:GROUND-70,w:50,h:70},{x:4060+CV,y:GROUND-96,w:60,h:96},{x:5720+CV,y:GROUND-80,w:54,h:80},{x:6110+CV,y:GROUND-92,w:60,h:92}];
 const ALTAR={x:5920+RD,y:GROUND-36,w:64,h:36},FATHER_X=470,SHELF_X=610;
@@ -435,7 +435,7 @@ const A={
   voices:{},
   voiceStart(id,pitch){
     if(!this.ctx)return;this.voiceStop(id);
-    const c=this.ctx,t=c.currentTime,o=this.out(0,.55,1.2),env=c.createGain();
+    const c=this.ctx,t=c.currentTime,o=this.out(0,.31,1.2),env=c.createGain();
     env.gain.setValueAtTime(0,t);env.gain.linearRampToValueAtTime(1,t+.07);env.gain.setTargetAtTime(.8,t+.07,.5);env.connect(o);
     let src,vib=null;
     if(this.bank['voice.tone']){src=c.createBufferSource();src.buffer=this.bank['voice.tone'];src.loop=true;src.playbackRate.value=pitch/220;src.connect(env);}
@@ -458,7 +458,7 @@ const A={
   },
   voiceStopAll(){Object.keys(this.voices).forEach(k=>this.voiceStop(k));},
   hum(pitch,t,dur){
-    if(!this.ctx)return;const c=this.ctx,{pan,gain}=this.pos(PANEL_X),o=this.out(pan,gain*.16,1.4);
+    if(!this.ctx)return;const c=this.ctx,{pan,gain}=this.pos(PANEL_X),o=this.out(pan,gain*.09,1.4);
     if(this.bank['call.hum']){const b=c.createBufferSource();b.buffer=this.bank['call.hum'];b.playbackRate.value=pitch/220;const g=c.createGain();g.gain.setValueAtTime(1,t);g.gain.setTargetAtTime(0,t+dur-.1,.08);b.connect(g);g.connect(o);b.start(t);b.stop(t+dur+.5);return;}
     const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.connect(o);
     const env=c.createGain();env.gain.setValueAtTime(0,t);env.gain.linearRampToValueAtTime(1,t+.12);env.gain.setValueAtTime(1,t+dur-.14);env.gain.linearRampToValueAtTime(0,t+dur);env.connect(lp);
@@ -519,13 +519,13 @@ const A={
     const c=this.ctx,src=c.createBufferSource();src.buffer=this.bank[name];
     if(p.pitch)src.playbackRate.value=p.pitch/220;
     const {pan,gain}=p.x!=null?this.pos(p.x):{pan:0,gain:1};
-    const lvl=name==='ritual.choir'?(.3+.7*(p.accuracy??1)):name==='stone.strike'?.56:1;
+    const lvl=name==='ritual.choir'?(.3+.7*(p.accuracy??1)):name==='stone.strike'?.45:1;
     src.connect(this.out(pan,gain*lvl,1));src.start();
   },
   fire(name,p={},cat='player'){
     log(name,p,cat);
     if(!this.ctx)return;
-    if(name==='ritual.intone.start'){this.intoneStart(p.pitch);return;}
+    if(name==='ritual.intone.start'){this.intoneStart(p.pitch*2);return;}   // her voice, an octave above the stone's pitch
     if(name==='ritual.intone.stop'){this.intoneStop();return;}
     if(this.bank[name]){this.playBank(name,p);return;}
     const fn=SYNTH[name];if(fn)fn(p,this.ctx.currentTime);
@@ -546,7 +546,7 @@ const SYNTH={
   'step'(p,t){const o=A.out(0,.16,.5);A.noise(o,t,.06,450+Math.random()*350,1.2);A.tone(o,t,95,.05,.4,.003,70);},
   'jump'(p,t){A.noise(A.out(0,.1,.4),t,.18,2400,.6,.05);},
   'land'(p,t){const o=A.out(0,.28,.6);A.tone(o,t,80,.18,.9,.002,42);A.noise(o,t,.09,380,1);},
-  'stone.strike'(p,t){A.stone(p.pitch,p.tau||3,p.x,.25,t);},   // .25 = 5 dB below the old .45
+  'stone.strike'(p,t){A.stone(p.pitch,p.tau||3,p.x,.2,t);},   // .2 = 7 dB below the old .45
   'stone.turn'(p,t){const {pan,gain}=A.pos(p.x);A.noise(A.out(pan,gain*.35,.8),t,.42,260,3,.04,520);A.stone(p.pitch,.5,p.x,.06,t+.3);},
   'relation.lit'(p,t){const {pan,gain}=A.pos(p.x);const o=A.out(pan,gain*.07,1);A.tone(o,t,p.pitch*4,1.2,1,.01);A.tone(o,t+.07,p.pitch*6,1,.6,.01);},
   'threshold.open'(p,t){const {pan,gain}=A.pos(DOOR1.x);A.noise(A.out(pan,gain*.9,1),t,3.4,110,.7,.4,null,'lowpass');stones.forEach((s,i)=>A.stone(s.pitches[s.idx],3,s.x,.12,t+.3+i*.28));},
@@ -663,7 +663,7 @@ const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const glCanvas=document.getElementById('gl'),glFg=document.getElementById('glfg');let G3=!!(window.World3D&&World3D.init(glCanvas,glFg));glCanvas.hidden=glFg.hidden=!G3;
 function setG3(on){G3=on&&!!window.World3D&&World3D.ready();glCanvas.hidden=glFg.hidden=!G3;if(window.World3D)World3D.setEnabled(G3);if(G3)load3D(WORLD);}
 function load3D(name){if(!window.World3D||!World3D.ready())return;const D=name==='east'?EAST:WEST_DATA;World3D.load(name,D,name!=='east'?{}:{east:{altar:ALTAR,shelfX:SHELF_X,
-  arches:[[40,150],[700,110],[1000,120]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,bellZone:[1100+BX,1180+BX+1010],stream:[560,1090],
+  arches:[[40,150],[700,110],[1000,120]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,bellZone:[1100+BX,1180+BX+1010],gateZone:[3900+RD,4520+RD],stream:[560,1150],
   lintels:[[1100,190],[DOOR1.x+DOOR1.w/2,DOOR1.y],[DOOR1W.x+DOOR1W.w/2,DOOR1W.y],[DOORG.x+DOORG.w/2,DOORG.y],[DOOR2.x+DOOR2.w/2,DOOR2.y]]}});}
 let SHK=null;
 function draw3D(t){
@@ -1491,7 +1491,7 @@ function restartJourney(){
     camX=clamp(player.x+12-W*.42,0,WORLD_W-W);$('fade').classList.remove('on');state.mode='play';},1300);
 }
 function caption(text,dur=7){state.caption=text;state.captionUntil=nowS()+dur;}
-function nearAltar(){return WORLD==='east'&&ritual.done&&state.door2Open&&!state.gathered&&Math.abs(player.x+player.w/2-ALTAR.x)<46;}
+function nearAltar(){return WORLD==='east'&&ritual.done&&state.door2Open&&!state.gathered&&Math.abs(player.x+player.w/2-ALTAR.x)<55;}
 function closeReturnBells(){state.returnBells=true;state.door1WOpen=false;phrase=null;stones.forEach(s=>{s.idx=s.start;s.last=-1e9;});renderRelations();}
 function gather(){state.carrying=true;state.gathered=true;A.fire('item.gather',{x:ALTAR.x},'world');closeReturnBells();A.fire('door.close',{x:DOOR1W.x},'world');caption('Carry the light home. Far back on the road, a bell door has fallen shut.');}
 function beginReturn(){
@@ -1505,7 +1505,8 @@ function beginReturn(){
   },3200);
 }
 function die(then){state.dying={t0:nowS(),then};player.vx=0;for(const k in keys)keys[k]=false;log('death',{x:Math.round(player.x)},'player');}
-function updateDying(dt){const p=player;if(!p.onGround&&!p.mantle){p.vy=Math.min(p.vy+GRAV*dt*.35,300);p.y+=p.vy*dt*.4;}
+function updateDying(dt){const p=player;if(!p.onGround&&!p.mantle){const prev=p.y+p.h,cx=p.x+p.w/2;p.vy=Math.min(p.vy+GRAV*dt,TERM);p.y+=p.vy*dt;const feet=p.y+p.h;
+    if(p.vy>=0)for(const q of [...solids(),...(state.inShaft?[]:PLATS)])if(cx>=q.x&&cx<=q.x+q.w&&prev<=q.y+.5&&feet>=q.y){p.y=q.y-p.h;p.vy=0;p.onGround=true;break;}}
   if(nowS()-state.dying.t0>1.45){const f=state.dying.then;state.dying=null;f();}}
 function update(dt){
   const t=nowS();
@@ -1627,7 +1628,7 @@ function drawShards(t){
   if(!state.gathered){const fl=.75+.25*Math.sin(t*2.2);shard(ALTAR.x-camX,ALTAR.y-12,1.3,state.door2Open?fl:.35);}
 }
 // The waterfall: falls from the roof through the chasm between the two shelves.
-function drawWaterfall(t){WATERFALLS.forEach(wf=>drawOneFall(wf,t));}
+function drawWaterfall(t){WATERFALLS.forEach(wf=>{if(!wf.spill)drawOneFall(wf,t);});}
 function drawOneFall(wf,t){
   const x=wf.x-camX,w=wf.w;if(x<-80||x>W+80)return;
   if(wf.bot==null||wf.world!==WORLD){wf.world=WORLD;const gt=groundAt(wf.x+w/2);wf.bot=gt>=GROUND+40||!solids().some(o=>wf.x+w/2>=o.x&&wf.x+w/2<=o.x+o.w&&o.y===gt)&&!PLATS.some(q=>q.y===gt)?H:gt;}
@@ -1668,7 +1669,7 @@ function drawCaveDark(t){
   hole(cx-camX,player.y+34,235,.96);
   if(state.carrying)hole(cx-camX+player.face*9,player.y+40,260,.9);
   creaturePositions(t).forEach(c=>{const x=c.x-camX;if(x>-100&&x<W+100)hole(x,c.y,80,.85);});
-  CRYSTALS.forEach((c,i)=>{const x=c.x-camX;if(x>-120&&x<W+120)hole(x,c.y,90,.75+.15*Math.sin(t*1.6+i));});
+  CRYSTALS.forEach((c,i)=>{const P=G3&&World3D.crystalScreen?World3D.crystalScreen(WORLD,i):null,x=P?P[0]:c.x-camX,y=P?P[1]:c.y;if(x>-120&&x<W+120)hole(x,y,P?75:90,.75+.15*Math.sin(t*1.6+i));});
   ctx.drawImage(darkC,0,0,W,H);
 }
 // Doorways between the worlds: behind the outpost (opens with the map), at the far end of the deep ways, and the alcove's back wall.
