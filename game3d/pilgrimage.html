@@ -1428,7 +1428,8 @@ function movePlayer(dt){
 function supported(p){const S=solids(),y=p.y+p.h+2,hit=x=>S.some(s=>x>=s.x&&x<=s.x+s.w&&y>=s.y&&y<=s.y+s.h)||PLATS.some(q=>x>=q.x&&x<=q.x+q.w&&y>=q.y&&y<=q.y+6);return hit(p.x+3)&&hit(p.x+p.w-3);}
 function renderLives(){const el=document.getElementById('hudLives');if(el)el.innerHTML=Array.from({length:LIVES},(_,i)=>`<i class="pip${i<state.lives?'':' off'}"></i>`).join('');}
 let dlg=null;
-function openDialog(lines,done){dlg={lines,i:0,done};state.mode='dialog';for(const k in keys)keys[k]=false;A.voiceStopAll();showLine();}
+function openDialog(lines,done){dlg={lines,i:0,done};const tg=WORLD==='east'&&torvenFig();if(tg&&tg.walking){tg.walking=false;tg.greeted=true;tg.idleI=null;}   // Torven settles into his idle pose for the talk
+  state.mode='dialog';for(const k in keys)keys[k]=false;A.voiceStopAll();showLine();}
 function showLine(){const l=dlg.lines[dlg.i];$('dlgWho').textContent=l.who||'';$('dlgText').textContent=l.text;$('dialog').hidden=false;}
 function advanceDialog(){if(!dlg)return;if(A.ctx)SYNTH['ui.click']({},A.ctx.currentTime);dlg.i++;if(dlg.i<dlg.lines.length){showLine();return;}$('dialog').hidden=true;const d=dlg.done;dlg=null;state.mode='play';if(d)d();}
 function torvenLines(key){
@@ -1491,7 +1492,7 @@ function restartJourney(){
     camX=clamp(player.x+12-W*.42,0,WORLD_W-W);$('fade').classList.remove('on');state.mode='play';},1300);
 }
 function caption(text,dur=7){state.caption=text;state.captionUntil=nowS()+dur;}
-function nearAltar(){return WORLD==='east'&&ritual.done&&state.door2Open&&!state.gathered&&Math.abs(player.x+player.w/2-ALTAR.x)<55;}
+function nearAltar(){return WORLD==='east'&&ritual.done&&state.door2Open&&!state.gathered&&Math.abs(player.x+player.w/2-ALTAR.x)<66;}
 function closeReturnBells(){state.returnBells=true;state.door1WOpen=false;phrase=null;stones.forEach(s=>{s.idx=s.start;s.last=-1e9;});renderRelations();}
 function gather(){state.carrying=true;state.gathered=true;A.fire('item.gather',{x:ALTAR.x},'world');closeReturnBells();A.fire('door.close',{x:DOOR1W.x},'world');caption('Carry the light home. Far back on the road, a bell door has fallen shut.');}
 function beginReturn(){

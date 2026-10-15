@@ -20,6 +20,8 @@ export function buildHorizontal(name, D, X) {
   const roof = x => lerp(lerp(400, 355, caveK(x)), 900, groveK(x)) + N(x * .004, 3, 1) * 30;
   w.roof = roof; w.depth = depth;
   // stretches of wall kept plain (no inscriptions): the bell gate, and the Assembly gate where the call is sung
+  // the deep ways: the further in, the fewer inscriptions; normal again toward either end
+  const insK = x => X.east ? 1 : 1 - .85 * smooth(.08, .4, Math.min(x, W - x) / W);
   const isPlain = x => !!X.east && [X.east.bellZone, X.east.gateZone].some(z => z && x > z[0] && x < z[1]);
 
   // ---------- floors and the gaps between them ----------
@@ -81,7 +83,7 @@ export function buildHorizontal(name, D, X) {
         const bh = Math.min(top - y, 50 + R() * 170); if (bh < 20) break;
         const g = worldUVBox(cw - 3, bh - 3, 40 + R() * 30); g.translate(cx, y + bh / 2, zb + (R() - .5) * 14);
         const plain = isPlain(cx);
-        const k = !plain && R() < .176 && bh > 60 && cw > 90 ? 2 : R() < .5 ? 0 : 1; geos[k].push(g); y += bh;
+        const k = !plain && R() < .176 * insK(cx) && bh > 60 && cw > 90 ? 2 : R() < .5 ? 0 : 1; geos[k].push(g); y += bh;
       }
     }
     geos.forEach((list, k) => { if (list.length) G.add(new THREE.Mesh(mergeSafe(list), masonryMat(k, 0xc3d2dc))); });
@@ -268,7 +270,7 @@ export function buildHorizontal(name, D, X) {
       const cx = wf.x + wf.w / 2, onFloor = isFloorX(cx), top = roof(cx) + 10, bot = onFloor ? 0 : -900, m = fallMat();
       const g = new THREE.PlaneGeometry(wf.w * 1.15, top - bot, 1, 20); g.translate(cx, (top + bot) / 2, -24);
       const curtain = new THREE.Mesh(g, m); G.add(curtain);
-      const back = curtain.clone(); back.material = m; back.position.z = -10; back.scale.x = .8; G.add(back);
+      const bg = new THREE.PlaneGeometry(wf.w * .92, top - bot, 1, 20); bg.translate(cx, (top + bot) / 2, -34); G.add(new THREE.Mesh(bg, m));
       const mist = driftPoints(Array.from({ length: 28 }, () => ({ x: cx + (R() - .5) * wf.w * 2.2, u: R(), z: -24 + (R() - .5) * 70, ph: R() * 6, sp: .05 + R() * .05, s: 12 + R() * 16, a: .5 })), { color: [.7, .85, .92], y0: onFloor ? -6 : -500, y1: onFloor ? 60 : 40, sway: 20, alpha: .13 });
       trackGlow(mist.material); G.add(mist);
       w.updates.push(t => { m.uniforms.uTime.value = t; });
