@@ -385,6 +385,10 @@ export function buildHorizontal(name, D, X) {
     const dm = driftPoints(dust, { color: [.7, .8, .88], y0: 0, y1: 380, sway: 18, alpha: .3 }); trackGlow(dm.material); G.add(dm);
   }
 
+  // the spirit cat's light (a test; v31 sends its place each frame as o.cat)
+  { const L = { kind: 'point', x: -1e6, y: 0, z: 34, color: 0x8f82ff, dist: 420, decay: 1.3, weight: 4, I: (t, o) => o.cat ? 520 * o.cat.a * (.92 + .08 * Math.sin(t * 3.1)) : 0 };
+    addLight(w, L); const Lr = w.lights[w.lights.length - 1];
+    w.updates.push((t, o) => { if (o.cat) { Lr.x = o.cat.x; Lr.y = w.mapY(o.cat.y - 16); } }); }
   if (grove) buildGrove(w, D, X, { roof, depth, R });
   return w;
 }
