@@ -36,8 +36,8 @@ input[type=range]{accent-color:var(--cold);width:100px}
 @media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}}
 .stage{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#000}
 canvas#game{display:block;width:100%;aspect-ratio:16/9;position:relative}
-canvas#gl,canvas#glfg{position:absolute;inset:0;width:100%;height:100%;display:block}
-canvas#glfg{pointer-events:none}
+canvas#gl,canvas#glfg,canvas#ui{position:absolute;inset:0;width:100%;height:100%;display:block}
+canvas#glfg,canvas#ui{pointer-events:none}
 .hud{position:absolute;inset:0 0 auto 0;display:flex;justify-content:space-between;gap:12px;padding:10px 14px;font:12px var(--mono);pointer-events:none;text-shadow:0 1px 2px #000}
 .hud b{color:var(--light);font-weight:500}
 .hud-r{display:flex;gap:16px;align-items:center}
@@ -115,6 +115,7 @@ section.notes p{margin:0}
         <canvas id="gl" aria-hidden="true"></canvas>
         <canvas id="game" aria-label="Game view"></canvas>
         <canvas id="glfg" aria-hidden="true"></canvas>
+        <canvas id="ui" aria-hidden="true"></canvas>
         <div class="hud"><div>Cycle <b id="hudLoop">1</b> of 3 · <span id="hudZone">The outpost</span></div><div class="hud-r"><span id="hudPhrase"></span><span class="lives" id="hudLives" aria-label="Lives"></span></div></div>
         <div class="dialog" id="dialog" hidden><div class="who" id="dlgWho"></div><p id="dlgText"></p><span class="keys">E or Enter to continue</span></div>
         <div class="hint" id="hint"></div>
@@ -667,6 +668,7 @@ function playerFrame(t){
 
 /* ---------- canvas & static layers ---------- */
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const uiCanvas=document.getElementById('ui'),uiCtx=uiCanvas.getContext('2d');   // the top layer: the map, above the 3D foreground
 // The 3D view (World3D) draws the world behind this canvas; this canvas keeps the characters, props and interface. G switches back to v31's 2D drawing.
 const glCanvas=document.getElementById('gl'),glFg=document.getElementById('glfg');if(!(window.World3D&&World3D.init(glCanvas,glFg)))document.getElementById('errBox').hidden=false,document.getElementById('errBox').textContent='This game needs WebGL, which this browser has turned off or does not support. Try a current Chrome, Edge, Firefox or Safari with hardware acceleration on.';
 function load3D(name){if(!window.World3D||!World3D.ready())return;const D=name==='east'?EAST:WEST_DATA;World3D.load(name,D,name!=='east'?{}:{east:{altar:ALTAR,shelfX:SHELF_X,
@@ -684,6 +686,7 @@ function resize(){
   const r=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
   canvas.width=Math.max(1,Math.round(r.width*dpr));canvas.height=Math.max(1,Math.round(r.width*9/16*dpr));
   const s=canvas.width/W;ctx.setTransform(s,0,0,s,0,0);
+  uiCanvas.width=canvas.width;uiCanvas.height=canvas.height;uiCtx.setTransform(s,0,0,s,0,0);
   if(window.World3D)World3D.resize(r.width,r.width*9/16);
   vignette=ctx.createRadialGradient(W/2,H*.45,H*.25,W/2,H*.5,W*.62);vignette.addColorStop(0,'rgba(0,0,0,0)');vignette.addColorStop(1,'rgba(0,0,0,.62)');
 }
@@ -785,7 +788,7 @@ function updateGrove(t){
   if(state.lives<LIVES&&x<G.b-60){const was=state.lives;state.lives=LIVES;renderLives();A.fire('checkpoint',{},'world');log('lives.restore',{from:was,to:LIVES,where:'chamber'},'world');
     if(state.story.groveFound)caption('The living light restores you.',5);}
   if(!state.story.groveFound&&x<G.b-380){state.story.groveFound=1;A.fire('grove.wonder',{},'world');log('story.grove',{},'world');
-    openDialog([{who:'You',text:'So much is growing here. Light, and food. More than all of us could ever eat.'},
+    openDialog([{who:'You',text:'So much is growing here. Light, and food. Enough for a generation.'},
       {who:'You',text:'This might save the community.'}]);}
 }
 function placeShaft(D){
@@ -1204,22 +1207,23 @@ function showLine(){const l=dlg.lines[dlg.i];$('dlgWho').textContent=l.who||'';$
 function advanceDialog(){if(!dlg)return;if(A.ctx)SYNTH['ui.click']({},A.ctx.currentTime);dlg.i++;if(dlg.i<dlg.lines.length){showLine();return;}$('dialog').hidden=true;const d=dlg.done;dlg=null;state.mode='play';if(d)d();}
 function torvenLines(key){
   if(key==='home')return [{who:'Torven',text:'Carry it carefully. Tell your father I asked after him.'}];
-  if(state.loop===1)return [{who:'Torven',text:'You are from the outpost on the far road. Your father keeps it, yes?'},{who:'You',text:'He does. He sent me for the light.'},
-      {who:'Torven',text:'And how does the outpost fare? The water, the stores?'},{who:'You',text:'The water runs well. The stores are thinning.'},
-      {who:'Torven',text:'We will send what stores we can.'},
-      {who:'Torven',text:'But I will be honest with you. The Assembly\'s own stores are beginning to run low as well.'},
+  if(state.loop===1)return [{who:'Torven',text:'Hail! You are from the outpost on the far road? Your father keeps it?'},{who:'You',text:'He does. He sent me for the Rite and the light.'},
+      {who:'Torven',text:'And how does the outpost fare? The water, the stores?'},{who:'You',text:'The water runs clean and pure, But the stores are thinning...'},
+      {who:'Torven',text:'We will send what we can.'},
+      {who:'Torven',text:'But I will be honest with you, the Assembly\'s own stores are beginning to run low as well.'},
       {who:'Torven',text:'Go on. They are gathering for the rite.'}];
   state.story.messageDelivered=1;
-  return [{who:'Torven',text:'Back again. How is the outpost?'},{who:'You',text:'My father sends word: our stores are running low.'},
+  return [{who:'Torven',text:'Back again I see. How is the outpost?'},{who:'You',text:'My father sends word: our stores are nearly gone.'},
       {who:'Torven',text:'We will help however we can. But I need his counsel.'},
-      {who:'Torven',text:'Tell him the whole community is struggling for food now, not only the outposts. Ask him what he would do.'},
+      {who:'Torven',text:'Tell him the whole community is struggling for food now, not only the outposts. I would welcome his council.'},
+      {who:'You',text:'I will inform my father.'},
       {who:'Torven',text:'Go on. They are waiting for you.'}];
 }
 function sendOff(){openDialog(state.loop===1
-  ?[{who:'Father',text:'Go to the Assembly, and bring back the light for our household.'},{who:'Father',text:'The road is long. Keep to the stone, and come home to us.'}]
+  ?[{who:'Father',text:'Veyra, go to the Assembly, and bring back the light for our household.'},{who:'Father',text:'The road is long. Keep to the stone, and come home to us.'}]
   :state.loop===2?[{who:'Father',text:'The light is failing again. Go to the Assembly, and bring back the light for our household.'},
       {who:'Father',text:'And carry a message to Torven, at the Assembly: our stores are running low.'}]
-  :[{who:'Father',text:'The stores are nearly gone. Go quickly, and bring back the light.'}],()=>log('journey.depart',{cycle:state.loop},'world'));}
+  :[{who:'Father',text:'Tell Torven that I have thought long on his query, alas only the stone remains. Our stores are all but gone now. Go quickly, and bring back the light.'}],()=>log('journey.depart',{cycle:state.loop},'world'));}
 function enterWest(){enterDescent();}
 function enterWestFloor(){
   state.mode='transition';A.voiceStopAll();$('fade').classList.add('on');log('world.enter',{world:'west'},'world');
@@ -1233,7 +1237,7 @@ function arriveFromWest(){
     Object.assign(player,{x:WORLD_W-110,y:GROUND-player.h,vx:0,vy:0,onGround:true,face:-1});state.lives=LIVES;renderLives();
     camX=clamp(player.x+12-W*.42,0,WORLD_W-W);state.zone=zoneAt(player.x);A.setSpace(state.zone);updateHud();$('fade').classList.remove('on');state.mode='play';
     openDialog([{who:'Torven',text:'You came by the deep ways? No one has come that way in a generation.'},
-      {who:'You',text:'The cave on the road has fallen in. And our stores are nearly gone.'},
+      {who:'You',text:'The cave on the East road has fallen in. And our stores are all but gone.'},
       {who:'You',text:'But on the deep way, before the old shaft, there is a chamber full of living light. Growing things, more than anyone could eat.'},
       {who:'Torven',text:'Growing? Down there?'},
       {who:'Torven',text:'Then you have saved us. All of us, Veyra.'},
@@ -1737,9 +1741,10 @@ function drawPlayer(){
   ctx.fillStyle=ROBE;ctx.beginPath();ctx.moveTo(-.6,-54+b);ctx.lineTo(3.4,-54+b);ctx.lineTo(3.9,-49.5+b);ctx.lineTo(-1.4,-49.5+b);ctx.closePath();ctx.fill();
   ctx.restore();
 }
+let uiShown=false;
 function render(){
   const t=nowS();
-  ctx.clearRect(0,0,W,H);
+  ctx.clearRect(0,0,W,H);if(uiShown){uiCtx.clearRect(0,0,W,H);uiShown=false;}
   if(dinner.on){renderDinner(t);return;}
   draw3D(t);
   if(state.inShaft){(VS===DESCENT?renderDescent:renderShaft)(t);if(state.mode==='map')drawMap(t);return;}
@@ -1955,6 +1960,7 @@ function trackMap(){if(WORLD!=='west'||!state.story)return;const m=state.story.w
   const x=player.x+player.w/2;if(!state.inShaft)m.min=Math.min(m.min,x);else if(VS===SHAFT)m.min=Math.min(m.min,WEST_DATA.barrier.x);
   (WEST_DATA.forks||[]).forEach((f,i)=>{if(x>f.x&&x<f.x+f.len&&!state.inShaft)m.forks[i+(player.y+player.h<268?'h':'l')]=1;});}
 function drawMap(t){
+  const ctx=uiCtx;uiShown=true;
   const D=WEST_DATA||(WEST_DATA=genWest()),L=D.W,mx=70,my=60,mw=W-140,mh=H-120,X=x=>mx+60+(x/L)*(mw-120),base=my+mh*.55;
   const Yr=x=>base+Math.sin(x*.00042)*30+Math.sin(x*.0011+1.3)*14-(D.barrier&&x<D.barrier.x?80:0);   // past the wall the way runs higher, at the top of the shaft
   ctx.fillStyle='rgba(2,4,6,.72)';ctx.fillRect(0,0,W,H);

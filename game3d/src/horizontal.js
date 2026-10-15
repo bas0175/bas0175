@@ -263,6 +263,33 @@ export function buildHorizontal(name, D, X) {
       w.updates.push(t => { fm.uniforms.uTime.value = t; });
       addLight(w, { kind: 'point', x: lip + 10, y: -40, z: 90, color: 0x9cc8dc, dist: 360, decay: 1.4, weight: .4, I: () => 220 });
     }
+    {   // its source: a fall from a cleft in the roof into a stone basin behind the path; the water runs under a
+        // slab where she walks and comes out as the stream. The fall stands behind her, so she passes in front of it.
+      const fx = a + 26, zf = -78, top = roof(fx) + 10;
+      const fm = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+        vertexShader: 'varying vec2 vUv;varying vec3 vP;void main(){vUv=uv;vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+        fragmentShader: `varying vec2 vUv;varying vec3 vP;uniform float uTime;float h(float x){return fract(sin(x*91.3)*47453.1);}
+          void main(){float e=smoothstep(0.0,0.22,vUv.x)*smoothstep(1.0,0.78,vUv.x);float col=floor(vUv.x*12.0);float sp=1.5+h(col)*0.8;
+          float s=fract(vP.y*0.006+uTime*sp+h(col+3.0));float streak=smoothstep(0.0,0.08,s)*smoothstep(0.35,0.1,s);
+          float foot=1.0+0.6*smoothstep(60.0,0.0,vP.y);float a=e*(0.08+0.4*streak*(0.5+0.5*h(col+7.0)))*foot;gl_FragColor=vec4(vec3(0.72,0.88,0.95)*a,1.0);}` });
+      const fallG = new THREE.PlaneGeometry(30, top, 1, 24); fallG.translate(fx, top / 2, zf);
+      G.add(new THREE.Mesh(fallG, fm)); const back = fallG.clone(); back.translate(0, 0, -8); back.scale(.8, 1, 1); back.translate(fx * .2, 0, 0); G.add(new THREE.Mesh(back, fm));
+      const cleft = rockGeo(46, 22, 40, 77, false); cleft.translate(fx, top - 6, zf - 4); G.add(new THREE.Mesh(cleft, darkRockMat));   // the lip it pours from
+      // the basin: a stone rim around dark water, foam where the fall lands
+      const rim = [], bx0 = fx - 46, bx1 = fx + 50, bz0 = zf - 34, bz1 = -6;
+      const box = (w2, h2, d2, x, y, z) => { const g = worldUVBox(w2, h2, d2); g.translate(x, y, z); rim.push(g); };
+      box(bx1 - bx0 + 16, 10, 8, (bx0 + bx1) / 2, 5, bz0 - 4); box(8, 10, bz1 - bz0, bx0 - 4, 5, (bz0 + bz1) / 2); box(8, 10, bz1 - bz0, bx1 + 4, 5, (bz0 + bz1) / 2);
+      box(bx1 - bx0 + 16, 6, 34, (bx0 + bx1) / 2, 3, 8);   // the slab over the culvert, level with the path
+      mergeAdd(rim, masonryMat(1, 0xb4c2cc));
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(bx1 - bx0, bz1 - bz0), new THREE.MeshStandardMaterial({ color: 0x0d1b24, roughness: .15, metalness: .3 }));
+      pool.rotation.x = -Math.PI / 2; pool.position.set((bx0 + bx1) / 2, 2, (bz0 + bz1) / 2); G.add(pool);
+      const foam = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: glowTex, color: 0xd8eef8, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false }));
+      foam.rotation.x = -Math.PI / 2; foam.position.set(fx, 3, zf + 4); foam.scale.set(70, 44, 1); G.add(foam);
+      const mist = driftPoints(Array.from({ length: 30 }, () => ({ x: fx + (R() - .5) * 70, u: R(), z: zf + (R() - .5) * 50, ph: R() * 6, sp: .05 + R() * .05, s: 10 + R() * 14, a: .5 })), { color: [.75, .88, .95], y0: 0, y1: 70, sway: 18, alpha: .14 });
+      trackGlow(mist.material); G.add(mist);
+      w.updates.push(t => { fm.uniforms.uTime.value = t; foam.material.opacity = .45 + .12 * Math.sin(t * 5.3) * Math.sin(t * 2.1); });
+      addLight(w, { kind: 'point', x: fx, y: 60, z: zf + 50, color: 0x9cc8dc, dist: 380, decay: 1.4, weight: .5, I: () => 240 });
+    }
     w.updates.push((t, o) => { wm.uniforms.uTime.value = t; const width = 70 + 14 * (o.loop || 1); water.scale.y = width; water.position.z = 25 + width / 2; curbB.position.z = 25 + width - 70; });
   }
 
