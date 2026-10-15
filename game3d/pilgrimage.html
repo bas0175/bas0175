@@ -1648,7 +1648,7 @@ function drawCrystals(t){
 function drawCaveDark(t){
   const cx=player.x+player.w/2,f=CAVES.reduce((m,[a,b])=>Math.max(m,clamp(Math.min(cx-a,b-cx)/260,0,1)),0);if(f<=0)return;
   if(!darkC){darkC=document.createElement('canvas');darkC.width=W;darkC.height=H;}
-  const d=darkC.getContext('2d');d.globalCompositeOperation='source-over';d.clearRect(0,0,W,H);d.fillStyle=`rgba(0,3,6,${.62*f})`;d.fillRect(0,0,W,H);
+  const d=darkC.getContext('2d');d.globalCompositeOperation='source-over';d.clearRect(0,0,W,H);d.fillStyle=`rgba(0,3,6,${(G3?.42:.62)*f})`;d.fillRect(0,0,W,H);
   d.globalCompositeOperation='destination-out';
   const hole=(x,y,r,a)=>{const g=d.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(0,0,0,${a})`);g.addColorStop(1,'rgba(0,0,0,0)');d.fillStyle=g;d.fillRect(x-r,y-r,2*r,2*r);};
   hole(cx-camX,player.y+34,235,.96);
@@ -2158,7 +2158,7 @@ function drawMap(t){
   ctx.fillStyle='rgba(48,40,32,.55)';ctx.font='11px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('M or Esc to fold the map away',W/2,my+mh-14);
   ctx.restore();
 }
-function frame(ts){const dt=Math.min(.033,(ts-last)/1000);last=ts;if(state.mode==='play'){update(dt);trackMap();}else if(state.mode==='dialog'&&!state.inShaft&&!state.dying&&!player.onGround){movePlayer(dt);camX=lerp(camX,clamp(player.x+12-W*.42,0,WORLD_W-W),.12);}render();requestAnimationFrame(frame);}
+function frame(ts){const dt=Math.min(.033,(ts-last)/1000);last=ts;if(state.mode==='play'){update(dt);trackMap();}else if(state.mode==='dialog'&&!state.inShaft&&!state.dying&&(!player.onGround||Math.abs(player.vx)>1)){movePlayer(dt);camX=lerp(camX,clamp(player.x+12-W*.42,0,WORLD_W-W),.12);}render();requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 </script>
 </body>

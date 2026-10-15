@@ -3,7 +3,8 @@
 import * as THREE from 'three';
 import { makeWorld, addLight, trackGlow } from './core.js';
 import { makeNoise, mulberry32, smooth, clamp, lerp } from './util.js';
-import { mergeSafe, BUMP, rockMat, glowTex, driftPoints } from './materials.js';
+import { mergeSafe, caveRockMat, BUMP, rockMat, glowTex, driftPoints } from './materials.js';
+import { loftRock } from './rockgen.js';
 
 export function buildVertical(name, S, kind) {
   const w = makeWorld(name, y => -y), G = w.group, N = makeNoise(kind === 'descent' ? 7373 : 5150), R = mulberry32(kind === 'descent' ? 1 : 2);
@@ -49,12 +50,10 @@ export function buildVertical(name, S, kind) {
   {
     const list = [];
     S.ledges.forEach((L, i) => {
-      const s = new THREE.Shape(); L.top.forEach(([dx, dy], k) => k ? s.lineTo(L.x + dx, -(L.y + dy)) : s.moveTo(L.x + dx, -(L.y + dy))); L.bot.forEach(([dx, dy]) => s.lineTo(L.x + dx, -(L.y + dy))); s.closePath();
-      const g = new THREE.ExtrudeGeometry(s, { depth: ZF * .1 - ZB, steps: 6, bevelEnabled: true, bevelSize: 3, bevelThickness: 4, bevelSegments: 1, curveSegments: 1 }), p = g.attributes.position, nn = makeNoise(300 + i);
-      for (let v = 0; v < p.count; v++) { const z = p.getZ(v); if (z < 2) continue; const yy = p.getY(v), top = -(L.y) - yy < 5; if (top && z > (ZF * .1 - ZB) - 80) continue; p.setY(v, yy + (top ? 0 : nn(p.getX(v) * .03, z * .02, 1) * 10)); }
-      g.computeVertexNormals(); g.translate(0, 0, ZB); list.push(g);
+      const out = [...L.top.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy), top: true })), ...L.bot.map(([dx, dy]) => ({ x: L.x + dx, y: -(L.y + dy) }))];
+      list.push(loftRock(out, ZB, 44, { amp: 7, bevel: 16, step: 9, seed: 300 + i, colTop: 0xb6c6d0, colSide: 0x5c707e, colBottom: 0x222c34 }));
     });
-    G.add(new THREE.Mesh(mergeSafe(list), new THREE.MeshStandardMaterial({ color: 0x5a6e7a, roughness: .9, bumpMap: BUMP, bumpScale: 1.8 })));
+    G.add(new THREE.Mesh(mergeSafe(list), caveRockMat));
   }
   // loose rock on the floor
   { const list = []; for (let i = 0; i < 26; i++) { const sz = 10 + R() * 40; const g = new THREE.IcosahedronGeometry(sz, 1); g.scale(1 + R(), .5 + R() * .4, 1); g.translate(R() * S.W, -S.H + sz * .3, ZB + R() * (ZF - ZB) * .8); list.push(g); } G.add(new THREE.Mesh(mergeSafe(list), rockMat)); }

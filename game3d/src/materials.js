@@ -114,7 +114,7 @@ export function driftPoints(items, { color = [.8, .9, .95], y0 = 0, y1 = 300, sw
 
 // Merge geometries of mixed kinds (indexed or not, with or without uvs) into one.
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-export function mergeSafe(list) {
+export function mergeSafe(list, defColor = [1, 1, 1]) {
   const norm = list.map(g => {
     let h = g.index ? g.toNonIndexed() : g;
     if (!h.attributes.normal) h.computeVertexNormals();
@@ -123,6 +123,14 @@ export function mergeSafe(list) {
     return h;
   });
   const hasColor = norm.some(g => g.attributes.color);
-  if (hasColor) norm.forEach(g => { if (!g.attributes.color) g.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 3).fill(1), 3)); });
+  if (hasColor) norm.forEach(g => { if (!g.attributes.color) { const c = new Float32Array(g.attributes.position.count * 3); for (let i = 0; i < c.length; i += 3) c.set(defColor, i); g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); } });
   return mergeGeometries(norm);
 }
+
+// Grey grain multiplied over the vertex colours of lofted rock (kept light so the colours carry the tone)
+const ROCK_DETAIL = (() => { const N = makeNoise(21); const t = canvasTex(256, 256, (g, w, h) => { const im = g.createImageData(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const u = x / w * Math.PI * 2, v = y / h * Math.PI * 2, n = N.fbm(Math.cos(u) * 3 + 5, Math.sin(u) * 3 + Math.cos(v) * 3, Math.sin(v) * 3, 5);
+    const c = clamp(205 + n * 120, 120, 255), i = (y * w + x) * 4; im.data[i] = c * .97; im.data[i + 1] = c; im.data[i + 2] = Math.min(255, c * 1.03); im.data[i + 3] = 255; }
+  g.putImageData(im, 0, 0); }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; })();
+export const caveRockMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: ROCK_DETAIL, bumpMap: BUMP, bumpScale: 3, roughness: .9 });
+export const cutStoneMat = new THREE.MeshStandardMaterial({ vertexColors: true, map: MASONRY[1], bumpMap: BUMP, bumpScale: 1.6, roughness: .88 });
