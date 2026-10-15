@@ -127,7 +127,7 @@ section.notes p{margin:0}
             <p>Your father sends you to the Assembly for the household's light. Cross the long road alone (three falls and you return to the last checkpoint), ring the bells so they answer one another, answer the gate's call with your voice, take part in the rite, take the light, and carry it home.</p>
             <button class="go" id="startBtn" type="button">Set out</button>
             <button class="btn" id="jumpBtnT" type="button" style="margin-top:8px">Jump to a scene (testing)</button>
-            <span class="keys">← → or A D move · J jump to a scene · Space / W jump (hold for height) · E ring, intone or take · Q turn a bell · 1–7 sing · M map (once you have it) · G 3D or 2D view · Esc pause · N mute</span>
+            <span class="keys">← → or A D move · J jump to a scene · Space / W jump (hold for height) · E ring, intone or take · Q turn a bell · 1–7 sing · M map (once you have it) · Esc pause · N mute</span>
           </div>
         </div>
         <div class="overlay" id="pause" hidden>
@@ -1849,7 +1849,7 @@ function exitToTitle(){
   ['pause','end','dialog'].forEach(id=>$(id).hidden=true);dlg=null;$('fade').classList.remove('on');
   stopIntone();state.mode='title';log('session.exit',{},'world');$('title').hidden=false;if(A.ctx)A.ctx.suspend();
 }
-function start(){
+function start(){document.body.classList.add('started');
   A.init();['title','end','pause'].forEach(id=>$(id).hidden=true);$('fade').classList.remove('on');
   state.loop=1;state.phraseCount=0;state.ritualHistory=[];everLit.clear();
   log('session.start',{graph:graph.name,provisional:graph.provisional},'world');

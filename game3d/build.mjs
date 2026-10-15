@@ -12,3 +12,11 @@ const res = html.replace('<!--WORLD3D-->', () => `<script>window.EMBEDDED_SOUNDS
 mkdirSync('dist', { recursive: true });
 const name = 'dist/obsidian-cycle-iii-pilgrimage-3d.html'; writeFileSync(name, res);
 console.log(`${name}  ${(res.length / 1024 / 1024).toFixed(2)} MB`);
+// the tester build: the same game without the development panels (relations, log, exports, sprite and sound banks,
+// notes); the title and blurb above the game hide once they set out. The scene jumper (J) stays.
+const TESTER_CSS = `<style>body.tester aside,body.tester .notes,body.tester #endExport{display:none!important}
+body.tester .layout{grid-template-columns:minmax(0,1fr)}body.tester.started header>div:first-child{display:none}body.tester.started header{justify-content:flex-end}</style>`;
+const tester = res.replace('<body>', '<body class="tester">').replace('</head>', TESTER_CSS + '</head>');
+if (tester === res) throw new Error('tester build: markers not found');
+const tname = 'dist/obsidian-cycle-iii-tester.html'; writeFileSync(tname, tester);
+console.log(`${tname}  ${(tester.length / 1024 / 1024).toFixed(2)} MB`);
