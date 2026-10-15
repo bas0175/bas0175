@@ -36,7 +36,8 @@ input[type=range]{accent-color:var(--cold);width:100px}
 @media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}}
 .stage{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#000}
 canvas#game{display:block;width:100%;aspect-ratio:16/9;position:relative}
-canvas#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+canvas#gl,canvas#glfg{position:absolute;inset:0;width:100%;height:100%;display:block}
+canvas#glfg{pointer-events:none}
 .hud{position:absolute;inset:0 0 auto 0;display:flex;justify-content:space-between;gap:12px;padding:10px 14px;font:12px var(--mono);pointer-events:none;text-shadow:0 1px 2px #000}
 .hud b{color:var(--light);font-weight:500}
 .hud-r{display:flex;gap:16px;align-items:center}
@@ -113,6 +114,7 @@ section.notes p{margin:0}
       <div class="stage">
         <canvas id="gl" aria-hidden="true"></canvas>
         <canvas id="game" aria-label="Game view"></canvas>
+        <canvas id="glfg" aria-hidden="true"></canvas>
         <div class="hud"><div>Cycle <b id="hudLoop">1</b> of 3 · <span id="hudZone">The outpost</span></div><div class="hud-r"><span id="hudPhrase"></span><span class="lives" id="hudLives" aria-label="Lives"></span></div></div>
         <div class="dialog" id="dialog" hidden><div class="who" id="dlgWho"></div><p id="dlgText"></p><span class="keys">E or Enter to continue</span></div>
         <div class="hint" id="hint"></div>
@@ -246,7 +248,7 @@ const E_WAYSTONES=[{x:3990,label:'the cave mouth'},{x:6660,label:'the far side o
 const E_PILLARS=[{x:2440,y:400,w:60,h:440},{x:3500,y:400,w:72,h:440},{x:3640,y:350,w:72,h:490},{x:3780,y:410,w:72,h:430},
   {x:4950,y:420,w:70,h:420},{x:6380,y:300,w:100,h:540}];
 const E_PLATS=[{x:2060,y:370,w:120},{x:2250,y:300,w:140}];   // stone shelves jutting from the chasm wall: land on them from above, jump up through them
-const E_WATERFALLS=[{x:2205,w:30},{x:3195,w:36}];   // both fall into chasms                               // falls from the roof into the chasm, between the two shelves
+const E_WATERFALLS=[{x:3195,w:36}];   // both fall into chasms                               // falls from the roof into the chasm, between the two shelves
 const E_FLOORS=[[-200,1150],[1260,1560],[1720,2000],[2560,3150],[3300,3420],[3900,4900],[5070,5880],[6560,5480+CV],[5570+CV,5900+CV],[5990+CV,6260+CV],[6350+CV,12500]];   // gaps are crevasses
 const E_ROCKS=[{x:1400,y:GROUND-90,w:62,h:90},{x:3030,y:GROUND-70,w:50,h:70},{x:4060+CV,y:GROUND-96,w:60,h:96},{x:5720+CV,y:GROUND-80,w:54,h:80},{x:6110+CV,y:GROUND-92,w:60,h:92}];
 const ALTAR={x:5920+RD,y:GROUND-36,w:64,h:36},FATHER_X=470,SHELF_X=610;
@@ -510,14 +512,14 @@ const A={
     const D=this.drips.filter(Boolean);
     if(D.length){let i=Math.floor(Math.random()*D.length);if(D.length>1&&i===this.lastDrip)i=(i+1)%D.length;this.lastDrip=i;
       const src=c.createBufferSource();src.buffer=D[i];src.playbackRate.value=.94+Math.random()*.12;
-      src.connect(this.out(pan,gain*(.35+Math.random()*.25)*.56,.12));/* .56 = -5 dB */src.start(t);return;}
+      src.connect(this.out(pan,gain*(.35+Math.random()*.25)*.4,.12));/* .4 = -8 dB */src.start(t);return;}
     const o=this.out(pan,gain*.1,1);const f=900+Math.random()*1500;this.tone(o,t,f,.08,1,.002,f*.55);
   },
   playBank(name,p){
     const c=this.ctx,src=c.createBufferSource();src.buffer=this.bank[name];
     if(p.pitch)src.playbackRate.value=p.pitch/220;
     const {pan,gain}=p.x!=null?this.pos(p.x):{pan:0,gain:1};
-    const lvl=name==='ritual.choir'?(.3+.7*(p.accuracy??1)):1;
+    const lvl=name==='ritual.choir'?(.3+.7*(p.accuracy??1)):name==='stone.strike'?.56:1;
     src.connect(this.out(pan,gain*lvl,1));src.start();
   },
   fire(name,p={},cat='player'){
@@ -544,7 +546,7 @@ const SYNTH={
   'step'(p,t){const o=A.out(0,.16,.5);A.noise(o,t,.06,450+Math.random()*350,1.2);A.tone(o,t,95,.05,.4,.003,70);},
   'jump'(p,t){A.noise(A.out(0,.1,.4),t,.18,2400,.6,.05);},
   'land'(p,t){const o=A.out(0,.28,.6);A.tone(o,t,80,.18,.9,.002,42);A.noise(o,t,.09,380,1);},
-  'stone.strike'(p,t){A.stone(p.pitch,p.tau||3,p.x,.45,t);},
+  'stone.strike'(p,t){A.stone(p.pitch,p.tau||3,p.x,.25,t);},   // .25 = 5 dB below the old .45
   'stone.turn'(p,t){const {pan,gain}=A.pos(p.x);A.noise(A.out(pan,gain*.35,.8),t,.42,260,3,.04,520);A.stone(p.pitch,.5,p.x,.06,t+.3);},
   'relation.lit'(p,t){const {pan,gain}=A.pos(p.x);const o=A.out(pan,gain*.07,1);A.tone(o,t,p.pitch*4,1.2,1,.01);A.tone(o,t+.07,p.pitch*6,1,.6,.01);},
   'threshold.open'(p,t){const {pan,gain}=A.pos(DOOR1.x);A.noise(A.out(pan,gain*.9,1),t,3.4,110,.7,.4,null,'lowpass');stones.forEach((s,i)=>A.stone(s.pitches[s.idx],3,s.x,.12,t+.3+i*.28));},
@@ -595,7 +597,8 @@ const SHEET_IMG=new Image();SHEET_IMG.src='data:image/png;base64,iVBORw0KGgoAAAA
 const SHEET_ON=true;   // model-sheet frames always (the painted cutout remains only as a fallback if the sheet fails to load)
 // RUN4: the 4-frame run (two frames per footstep, footfalls on frames 1 and 3); F toggles back to the 8-frame run.
 let RUN4=true;const STEP_T=60/186,runPerStep=()=>RUN4?2:4,runSet=()=>RUN4?SHEET_META.run4:SHEET_META.run;
-function runFrame(p){return Math.floor(p.walkT*runPerStep()/STEP_T);}
+const RUN_FX=2;   // run frames per footstep sound, relative to the frames' own footfalls
+function runFrame(p){return Math.floor(p.walkT*runPerStep()*RUN_FX/STEP_T);}
 function groundBelow(p,d){const x=p.x+p.w/2,f=p.y+p.h;return solids().some(s=>x>=s.x&&x<=s.x+s.w&&s.y>=f-2&&s.y<=f+d)||(!state.inShaft&&PLATS.some(q=>x>=q.x&&x<=q.x+q.w&&q.y>=f-2&&q.y<=f+d));}
 function sheetFrame(p,t){
   const since=v=>t-v,M=SHEET_META;
@@ -657,17 +660,17 @@ function playerFrame(t){
 /* ---------- canvas & static layers ---------- */
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 // The 3D view (World3D) draws the world behind this canvas; this canvas keeps the characters, props and interface. G switches back to v31's 2D drawing.
-const glCanvas=document.getElementById('gl');let G3=!!(window.World3D&&World3D.init(glCanvas));glCanvas.hidden=!G3;
-function setG3(on){G3=on&&!!window.World3D&&World3D.ready();glCanvas.hidden=!G3;if(window.World3D)World3D.setEnabled(G3);if(G3)load3D(WORLD);}
+const glCanvas=document.getElementById('gl'),glFg=document.getElementById('glfg');let G3=!!(window.World3D&&World3D.init(glCanvas,glFg));glCanvas.hidden=glFg.hidden=!G3;
+function setG3(on){G3=on&&!!window.World3D&&World3D.ready();glCanvas.hidden=glFg.hidden=!G3;if(window.World3D)World3D.setEnabled(G3);if(G3)load3D(WORLD);}
 function load3D(name){if(!window.World3D||!World3D.ready())return;const D=name==='east'?EAST:WEST_DATA;World3D.load(name,D,name!=='east'?{}:{east:{altar:ALTAR,shelfX:SHELF_X,
-  arches:[[40,150],[700,110],[1000,120]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,
+  arches:[[40,150],[700,110],[1000,120]],walls:[[1180+BX,1010],[4010+RD,480]],gateInscr:[3930+RD,560],circle:CIRCLE,bellZone:[1100+BX,1180+BX+1010],stream:[560,1090],
   lintels:[[1100,190],[DOOR1.x+DOOR1.w/2,DOOR1.y],[DOOR1W.x+DOOR1W.w/2,DOOR1W.y],[DOORG.x+DOORG.w/2,DOORG.y],[DOOR2.x+DOOR2.w/2,DOOR2.y]]}});}
 let SHK=null;
 function draw3D(t){
   const rs=t-(state.rumbleT||-99),shk=rs>0&&rs<7.5?Math.sin(Math.PI*rs/7.5)*(rs>1.4&&rs<5.6?3.2:1.2):0;
   SHK=shk?[(Math.random()-.5)*shk,(Math.random()-.5)*shk]:null;
   const vs=state.inShaft?(VS===DESCENT?'descent':'shaft'):null;if(vs)World3D.loadVertical(vs,VS);
-  World3D.frame({world:vs||WORLD,camX,camY:vs?shaftCamY:0,t,shake:SHK?[-SHK[0],-SHK[1]]:null,shaftI:vs?null:SHAFTS.map(shaftI),nearBell:!vs&&WORLD==='west'&&nearGroveBell()});
+  World3D.frame({loop:state.loop,world:vs||WORLD,camX,camY:vs?shaftCamY:0,t,shake:SHK?[-SHK[0],-SHK[1]]:null,shaftI:vs?null:SHAFTS.map(shaftI),nearBell:!vs&&WORLD==='west'&&nearGroveBell()});
 }
 let bgTiles=null,fgTiles=null,vignette;
 const TILE=2048;
@@ -1419,7 +1422,7 @@ function movePlayer(dt){
   if(was&&!p.onGround&&p.vy>=0)p.coyote=.1;   // a moment of grace after walking off an edge
   if(!was&&p.onGround){p.landAt=t;if(vy>280)A.fire('land',{v:Math.round(vy)},'player');}
   if(p.onGround&&Math.abs(p.vx)>30){p.walkT+=dt*Math.abs(p.vx)/RUN;
-    if(SHEET_ON&&Math.abs(p.vx)>=175){const st=Math.floor(runFrame(p)/runPerStep());if(p.lastStep==null&&p.stepT<.25)p.lastStep=st;if(st!==p.lastStep){p.lastStep=st;A.fire('step',{},'player');}p.stepT=0;}   // footfalls on frames 1 and 5
+    if(SHEET_ON&&Math.abs(p.vx)>=175){const st=Math.floor(runFrame(p)/(runPerStep()*RUN_FX));if(p.lastStep==null&&p.stepT<.25)p.lastStep=st;if(st!==p.lastStep){p.lastStep=st;A.fire('step',{},'player');}p.stepT=0;}   // footfalls on frames 1 and 5
     else{p.lastStep=null;p.stepT+=dt;if(p.stepT>.36){p.stepT=0;A.fire('step',{},'player');}}}else{p.stepT=.3;p.lastStep=null;}
 }
 function supported(p){const S=solids(),y=p.y+p.h+2,hit=x=>S.some(s=>x>=s.x&&x<=s.x+s.w&&y>=s.y&&y<=s.y+s.h)||PLATS.some(q=>x>=q.x&&x<=q.x+q.w&&y>=q.y&&y<=q.y+6);return hit(p.x+3)&&hit(p.x+p.w-3);}
@@ -1622,7 +1625,6 @@ function shard(x,y,s,a){ctx.save();const g=ctx.createRadialGradient(x,y,1,x,y,26
 function drawShards(t){
   for(let i=0;i<state.delivered;i++)shard(SHELF_X-24+i*22-camX,318,1.25,.95);
   if(!state.gathered){const fl=.75+.25*Math.sin(t*2.2);shard(ALTAR.x-camX,ALTAR.y-12,1.3,state.door2Open?fl:.35);}
-  if(state.carrying)shard(player.x+player.w/2+player.face*9-camX,player.y+player.h-44+Math.sin(t*3)*1.2,1,1);
 }
 // The waterfall: falls from the roof through the chasm between the two shelves.
 function drawWaterfall(t){WATERFALLS.forEach(wf=>drawOneFall(wf,t));}
@@ -1922,11 +1924,11 @@ function render(){
   SHAFTS.forEach(s=>drawOpening(s,shaftI(s),t));
   drawLamps(t);drawCrystals(t);if(WORLD==='west')drawGrove(t,false);drawWaterfall(t);}
   drawWays();
-  if(WORLD==='east'){drawLoopMarks();drawWater(t);drawPanel(t);drawRubble(t);}
+  if(WORLD==='east'){drawLoopMarks();if(!G3)drawWater(t);drawPanel(t);drawRubble(t);}
   drawFigures(t);
   if(WORLD==='east'){drawDoor(DOOR1,state.lift1);drawDoor(DOOR1W,state.liftW);drawDoor(DOORG,state.liftG);drawDoor(DOOR2,state.lift2);drawCircle(t);drawScore(t);drawShards(t);
     stones.forEach(s=>drawStone(s,t));}
-  if(WORLD==='west'&&!G3)drawGrove(t,true);drawCreatures(t);drawPlayer();drawSung(t);
+  if(WORLD==='west'&&!G3)drawGrove(t,true);drawCreatures(t);drawPlayer();if(state.carrying&&!state.inShaft)shard(player.x+player.w/2+player.face*14-camX,player.y+player.h-46+Math.sin(t*3)*1.2,1,1);drawSung(t);
   drawCaveDark(t);
   if(WORLD==='west'){drawWallMass();if(WEST_DATA.barrier&&player.x+player.w/2>WEST_DATA.barrier.x)drawShaftMouth(t);}
   ctx.restore();

@@ -77,7 +77,8 @@ export function buildHorizontal(name, D, X) {
       for (let y = 0; y < top;) {
         const bh = Math.min(top - y, 50 + R() * 170); if (bh < 20) break;
         const g = worldUVBox(cw - 3, bh - 3, 40 + R() * 30); g.translate(cx, y + bh / 2, zb + (R() - .5) * 14);
-        const k = R() < .176 && bh > 60 && cw > 90 ? 2 : R() < .5 ? 0 : 1; geos[k].push(g); y += bh;
+        const plain = X.east && X.east.bellZone && cx > X.east.bellZone[0] && cx < X.east.bellZone[1];
+        const k = !plain && R() < .176 && bh > 60 && cw > 90 ? 2 : R() < .5 ? 0 : 1; geos[k].push(g); y += bh;
       }
     }
     geos.forEach((list, k) => { if (list.length) G.add(new THREE.Mesh(mergeSafe(list), masonryMat(k, 0xc3d2dc))); });
@@ -107,9 +108,12 @@ export function buildHorizontal(name, D, X) {
   }
   // shelves jutting from the chasm walls
   {
-    const list = D.plats.filter(q => !q.mush).map((q, k) => loftRock([{ x: q.x, y: Y(q.y), top: true }, { x: q.x + q.w, y: Y(q.y), top: true }, { x: q.x + q.w - 8, y: Y(q.y + 14) }, { x: q.x + q.w * .55, y: Y(q.y + 24) }, { x: q.x + 10, y: Y(q.y + 15) }],
-      -150, 6, { amp: 4, freq: .04, bevel: 30, corner: 8, step: 8, seed: 60 + k, colTop: 0xffffff, colSide: 0xb4c2cc, colBottom: 0x55636d }));
-    mergeAdd(list, cutStoneMat);
+    const list = D.plats.filter(q => !q.mush).map((q, k) => {
+      const out = [{ x: q.x, y: Y(q.y), top: true }, { x: q.x + q.w, y: Y(q.y), top: true }];
+      for (let j = 1; j < 10; j++) { const u = j / 10; out.push({ x: q.x + q.w * (1 - u), y: Y(q.y) - 6 - 42 * Math.pow(Math.sin(Math.PI * u), .8) }); }
+      return loftRock(out, -170, 6, { amp: 8, bevel: 40, corner: 16, seed: 60 + k });
+    });
+    mergeAdd(list, caveRockMat, [.36, .43, .49]);
   }
   // boulders, rock slabs, stalagmites, low roofs, waystones
   {
@@ -130,7 +134,7 @@ export function buildHorizontal(name, D, X) {
   {
     const cone = new THREE.ConeGeometry(1, 1, 7, 3); cone.translate(0, .5, 0);
     const n = Math.round((X1 - X0) / 18), im = new THREE.InstancedMesh(cone, rockMat, n), M = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(); let k = 0;
-    const flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI);
+    const flip = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI), fgList = [];
     for (let i = 0; i < n; i++) {
       const x = X0 + R() * (X1 - X0), up = R() < .4, Dd = depth(x), ck = caveK(x);
       if (groveK(x) > .3 || (!up && R() > .12 + ck * .83)) continue;   // stalactites mostly in the caves; the built halls stay clean
@@ -138,9 +142,15 @@ export function buildHorizontal(name, D, X) {
       if (up && !isFloorX(x)) continue;
       const h = up ? 30 + R() * 130 : (40 + R() * 150) * (1 + ck * .6), r = h * (.12 + R() * .1);
       if (up) { p.set(x, -4, z); q.identity(); } else { p.set(x, roof(x) * (z < -.6 * Dd ? .93 : 1) + 12, z); q.copy(flip); }
-      s.set(r, h, r); M.compose(p, q, s); im.setMatrixAt(k++, M);
+      s.set(r, h, r);
+      if (!up && z > -280 && roof(x) - h < 330) {   // long enough to reach the play area: in front of her (foreground) or pushed well back
+        if (R() < .35) { p.z = 70 + R() * 160; M.compose(p, q, s); fgList.push(M.clone()); continue; }
+        p.z = -300 - R() * Dd * .4;
+      }
+      M.compose(p, q, s); im.setMatrixAt(k++, M);
     }
     im.count = k; G.add(im);
+    if (fgList.length) { const fim = new THREE.InstancedMesh(cone, new THREE.MeshStandardMaterial({ color: 0x1b252d, roughness: .95, flatShading: true }), fgList.length); fgList.forEach((m, i) => fim.setMatrixAt(i, m)); w.fg.add(fim); }
     const boul = [];
     for (let i = 0; i < (X1 - X0) / 90; i++) { const x = X0 + R() * (X1 - X0); if (!isFloorX(x) || groveK(x) > .3) continue; const sz = 18 + R() * 60, g = rockGeo(sz * (1 + R()), sz * (.6 + R()), sz, 900 + i); g.translate(x, -5, -150 - R() * depth(x) * .6); boul.push(g); }
     mergeAdd(boul, rockMat);
@@ -159,13 +169,29 @@ export function buildHorizontal(name, D, X) {
       const sh = worldUVBox(80, 10, 50); sh.translate(E.shelfX, Y(334), -40); list.push(sh); }
     // inscription walls behind the bell gate and the Assembly gate
     const panelTex = (w2, h2) => { const t = new THREE.TextureLoader().load(TEX.INS_URL); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(w2 / 300, h2 / 340); t.anisotropy = 8; return t; };
-    E.walls.forEach(([x, ww]) => { const g = worldUVBox(ww, 420, 50); g.translate(x + ww / 2, 210, -175); list.push(g);
+    E.walls.forEach(([x, ww], wi) => { const g = worldUVBox(ww, 420, 50); g.translate(x + ww / 2, 210, -175); list.push(g); if (E.bellZone && x >= E.bellZone[0] && x < E.bellZone[1]) return;   // the bell gate's wall: plain, so the bells and their lines read
       const m = new THREE.Mesh(new THREE.PlaneGeometry(ww - 20, 140), new THREE.MeshStandardMaterial({ map: panelTex(ww - 20, 140), roughness: .85, emissive: 0x6fa0bc, emissiveMap: panelTex(ww - 20, 140), emissiveIntensity: .1 })); m.position.set(x + ww / 2, Y(171), -148); G.add(m); });
     if (E.gateInscr) { const [x, ww] = E.gateInscr; const m = new THREE.Mesh(new THREE.PlaneGeometry(ww, 150), new THREE.MeshStandardMaterial({ map: panelTex(ww, 150), roughness: .85 })); m.position.set(x + ww / 2, Y(345), -148); G.add(m); }
     // lintels over the doors, the altar
-    E.lintels.forEach(([cx, y], i) => { const top = roof(cx) + 40, g = worldUVBox(90, top - Y(y), 150); g.translate(cx, (top + Y(y)) / 2, -40); ins.push(g); });
+    E.lintels.forEach(([cx, y], i) => { const top = roof(cx) + 40, g = worldUVBox(90, top - Y(y), 150); g.translate(cx, (top + Y(y)) / 2, -40); (E.bellZone && cx > E.bellZone[0] && cx < E.bellZone[1] ? list : ins).push(g); });
     { const a = E.altar, g = worldUVBox(a.w, a.h, 70); g.translate(a.x + a.w / 2 - a.w / 2, Y(a.y + a.h / 2), -10); ins.push(g); }
     mergeAdd(list, masonryMat(0, 0xaebdc8)); mergeAdd(ins, masonryMat(2, 0xc0ccd5));
+  }
+
+  // ---------- the outpost's stream (v31 drawWater): it rises a little each cycle ----------
+  if (X.east && X.east.stream) {
+    const [a, b] = X.east.stream, len = b - a;
+    const wm = new THREE.ShaderMaterial({ uniforms: { uTime: { value: 0 }, uLen: { value: len } }, transparent: true, depthWrite: false,
+      vertexShader: 'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+      fragmentShader: `varying vec2 vUv;uniform float uTime,uLen;float h(float x){return fract(sin(x*91.3)*47453.1);}
+        void main(){float x=vUv.x*uLen,y=vUv.y;float lane=floor(y*7.0);float sp=36.0+h(lane)*30.0;
+        float s=fract((x-uTime*sp)/(40.0+h(lane+2.0)*50.0)+h(lane+5.0));float glint=smoothstep(0.0,0.05,s)*smoothstep(0.22,0.06,s)*step(0.35,h(lane+9.0+floor((x-uTime*sp)/80.0)));
+        float edge=smoothstep(0.0,0.18,y)*smoothstep(1.0,0.82,y);vec3 c=mix(vec3(0.03,0.05,0.07),vec3(0.10,0.17,0.22),y)+vec3(0.75,0.86,0.92)*glint*0.55*edge;
+        gl_FragColor=vec4(c,0.92*edge+0.05);}` });
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(len, 1), wm); water.rotation.x = -Math.PI / 2; water.position.set(a + len / 2, 1.2, 46); G.add(water);
+    const cg = worldUVBox(len + 10, 6, 8); cg.translate(a + len / 2, 2, 22); mergeAdd([cg], masonryMat(0, 0xc8d4dc));
+    const cb = worldUVBox(len + 10, 6, 8); cb.translate(a + len / 2, 2, 70); const curbB = new THREE.Mesh(cb, masonryMat(0, 0xc8d4dc)); G.add(curbB);
+    w.updates.push((t, o) => { wm.uniforms.uTime.value = t; const width = 70 + 14 * (o.loop || 1); water.scale.y = width; water.position.z = 25 + width / 2; curbB.position.z = 25 + width - 70; });
   }
 
   // ---------- lamps: warm globes on stone posts ----------
@@ -175,13 +201,13 @@ export function buildHorizontal(name, D, X) {
     D.lamps.forEach((lx, i) => {
       const g = worldUVBox(18, 108, 18); g.translate(lx, 54, -60); posts.push(g);
       const cap = worldUVBox(26, 8, 26); cap.translate(lx, 110, -60); posts.push(cap);
-      const orb = new THREE.Mesh(new THREE.SphereGeometry(9, 20, 14), orbMat); orb.position.set(lx, Y(318), -60); G.add(orb);
-      const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd7a0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx, Y(318), -50); f.scale.set(46, 46, 1); G.add(f); flames.push({ f, i });
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(6, 20, 14), orbMat); orb.position.set(lx, Y(318), -60); G.add(orb);
+      const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd7a0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx, Y(318), -50); f.scale.set(30, 30, 1); G.add(f); flames.push({ f, i });
       const fl = (t) => .85 + .15 * Math.sin(t * 3.1 + i * 1.7) * Math.sin(t * 1.3 + i);
       addLight(w, { kind: 'point', x: lx, y: Y(318), z: -10, color: 0xffa860, dist: 380, decay: 1.35, weight: 1.4, I: t => 420 * fl(t) });
     });
     if (posts.length) mergeAdd(posts, masonryMat(1, 0x8fa0ac));
-    w.updates.push(t => flames.forEach(({ f, i }) => { const k = .85 + .15 * Math.sin(t * 3.1 + i * 1.7) * Math.sin(t * 1.3 + i); f.material.opacity = k; f.scale.setScalar(40 + 8 * k); }));
+    w.updates.push(t => flames.forEach(({ f, i }) => { const k = .85 + .15 * Math.sin(t * 3.1 + i * 1.7) * Math.sin(t * 1.3 + i); f.material.opacity = k; f.scale.setScalar(26 + 5 * k); }));
   }
 
   // ---------- light wells: openings in the roof, cold light to the floor ----------

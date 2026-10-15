@@ -17,7 +17,7 @@ export const C = { renderer: null, scene: null, camera: null, composer: null, gr
 const POINTS = 10, SPOTS = 5;
 const pool = { points: [], spots: [] };
 
-export function init(canvas) {
+export function init(canvas, fgCanvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
   renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
@@ -38,6 +38,14 @@ export function init(canvas) {
       void main(){vec3 c=texture2D(tDiffuse,vUv).rgb;c+=(h(vUv*800.0)-0.5)*0.03;gl_FragColor=vec4(c,1.0);}`,
   });
   composer.addPass(grade);
+  // the foreground layer: scenery in front of the characters (drawn on a canvas above v31's), so she can pass behind it
+  if (fgCanvas) {
+    const fr = new THREE.WebGLRenderer({ canvas: fgCanvas, antialias: true, alpha: true, premultipliedAlpha: true });
+    fr.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); fr.setClearColor(0x000000, 0); fr.toneMapping = THREE.ACESFilmicToneMapping; fr.toneMappingExposure = 1.3;
+    const fs = new THREE.Scene(); fs.fog = new THREE.Fog(0x04070a, DIST + 200, DIST + 2600);
+    fs.add(new THREE.HemisphereLight(0x8fb4cc, 0x121a20, 1.0)); const fk = new THREE.DirectionalLight(0xa9c8dc, .6); fk.position.set(-.3, .9, 1.1); fs.add(fk);
+    C.fg = { renderer: fr, scene: fs };
+  }
   Object.assign(C, { renderer, scene, camera, composer, grade, key });
 }
 
@@ -45,18 +53,19 @@ export function resize(w, h) {
   if (!C.renderer) return;
   C.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   C.renderer.setSize(w, h, false); C.composer.setSize(w, h);
+  if (C.fg) { C.fg.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); C.fg.renderer.setSize(w, h, false); }
 }
 
 // A world: a group plus its light sources and per-frame updates. Only one is visible at a time.
 export function makeWorld(name, mapY) {
-  const w = { name, group: new THREE.Group(), lights: [], updates: [], mapY };
-  w.group.visible = false; C.scene.add(w.group); C.worlds[name] = w; return w;
+  const w = { name, group: new THREE.Group(), fg: new THREE.Group(), lights: [], updates: [], mapY };
+  w.group.visible = false; C.scene.add(w.group); w.fg.visible = false; if (C.fg) C.fg.scene.add(w.fg); C.worlds[name] = w; return w;
 }
 
 export function frame(o) {
   if (!C.renderer || !C.enabled) return;
   const w = C.worlds[o.world]; if (!w) return;
-  for (const k in C.worlds) C.worlds[k].group.visible = C.worlds[k] === w;
+  for (const k in C.worlds) C.worlds[k].group.visible = C.worlds[k].fg.visible = C.worlds[k] === w;
   C.active = w;
   // camera: v31's view of 960 x 540, centred, looking straight at z = 0
   const cx = o.camX + VW / 2 + (o.shake ? o.shake[0] : 0), cy = w.mapY(o.camY + VH / 2) - (o.shake ? o.shake[1] : 0);
@@ -78,6 +87,7 @@ export function frame(o) {
   for (const m of C.glowMats) { m.uniforms.uTime.value = o.t; m.uniforms.uVH.value = C.renderer.domElement.height; }
   C.grade.uniforms.uTime.value = o.t;
   C.composer.render();
+  if (C.fg) C.fg.renderer.render(C.fg.scene, C.camera);
 }
 
 export function addLight(w, L) { w.lights.push(Object.assign({ weight: 1, dist: 600 }, L)); }
