@@ -74,11 +74,11 @@ export function buildVertical(name, S, kind) {
     });
     const glass = new THREE.MeshStandardMaterial({ color: 0x8a8274, roughness: .55, emissive: 0xffc890, emissiveMap: glassTex, emissiveIntensity: 1.4 });
     const orb = new THREE.Mesh(new THREE.SphereGeometry(9.5, 28, 18), glass); orb.position.set(lx, -ly, -24); orb.rotation.y = half ? Math.PI * .55 : .4; G.add(orb);
-    // on a worn stone pedestal (like the road's lamp posts), leaning a little
+    // on a worn stone pedestal (like the road's lamp posts), the globe centred on it
     const ped = new THREE.Group(), stone = masonryMat(1, 0x6f7a82), ph = 92 - 9.5;
     [[22, 10, 22, 5], [14, ph - 18, 14, 10 + (ph - 18) / 2], [20, 8, 20, ph - 4]].forEach(([w2, h2, d2, y2]) => { const b = worldUVBox(w2, h2, d2); b.translate(0, y2, 0); ped.add(new THREE.Mesh(b, stone)); });
-    ped.position.set(lx, -ay, -24); ped.rotation.z = half ? .025 : -.03; G.add(ped);
-    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffb060, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx + (half ? dir * -4 : 0), -ly, -18); f.scale.set(34, 34, 1); G.add(f);
+    ped.position.set(lx, -ay, -24); G.add(ped);
+    const f = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffb060, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true })); f.position.set(lx, -ly, -18); f.scale.set(34, 34, 1); G.add(f);
     // half: steady but weak. sputter: a dim buzz with dropouts, a few times a minute nearly out
     const fl = t => half ? .78 + .06 * Math.sin(t * 5.3) * Math.sin(t * 1.7)
       : (() => { const n = Math.sin(t * 13.1) * Math.sin(t * 7.7 + 1) * Math.sin(t * 2.3); const drop = Math.sin(t * .37) > .93 || Math.sin(t * 1.9 + 2) > .985 ? .12 : 1; return (.62 + .18 * n) * drop; })();

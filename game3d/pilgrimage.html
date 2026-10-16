@@ -1200,7 +1200,8 @@ function startIntone(){if(ritual.intoning)return;ritual.intoning=true;A.fire('ri
 function stopIntone(){if(!ritual.intoning)return;ritual.intoning=false;A.fire('ritual.intone.stop',{},'player');}
 function updateRitual(t){
   const inCircle=Math.abs(player.x+player.w/2-CIRCLE.x)<CIRCLE.r&&player.onGround;
-  if(!ritual.done&&!ritual.active&&inCircle&&state.gateOpen){
+  if(!inCircle||ritual.active||ritual.done)ritual.enterAt=null;else if(ritual.enterAt==null)ritual.enterAt=t;
+  if(!ritual.done&&!ritual.active&&inCircle&&state.gateOpen&&t-ritual.enterAt>=1.5){   // she stands in the light a moment before it begins
     Object.assign(ritual,{active:true,t0:t+1.2,cycle:0,m:0,n:0,results:[]});
     A.fire('ritual.begin',{pitch:+intonePitch().toFixed(2),cycles:RITUAL_CYCLES},'world');
   }
@@ -1276,19 +1277,20 @@ function enterWestFloor(){
     camX=clamp(player.x+12-W*.42,0,WORLD_W-W);state.zone='west';A.setSpace('west');updateHud();$('fade').classList.remove('on');state.mode='play';state.graceUntil=nowS()+1.5;
     caption('The deep ways. Keep west. Some ways end in stone; turn back and try another.',8);},1300);
 }
-function arriveFromWest(){
-  state.mode='transition';$('fade').classList.add('on');log('world.enter',{world:'east',via:'deep ways'},'world');
-  setTimeout(()=>{loadWorld('east');state.story.arrived=1;Object.assign(state,{gateOpen:true,liftG:1,door1Open:true,lift1:1,door2Open:true,lift2:1});state.talked.out=1;state.talked.home=1;buildFigures();
-    Object.assign(player,{x:WORLD_W-110,y:GROUND-player.h,vx:0,vy:0,onGround:true,face:-1});state.lives=LIVES;renderLives();
-    camX=clamp(player.x+12-W*.42,0,WORLD_W-W);state.zone=zoneAt(player.x);A.setSpace(state.zone);updateHud();$('fade').classList.remove('on');state.mode='play';
-    openDialog([{who:'Torven',text:'You came by the deep ways? No one has come that way in a generation.'},
+function arrivalTalk(){openDialog([{who:'Torven',text:'You came by the deep ways? No one has come that way in a generation.'},
       {who:'You',text:'The cave on the East road has fallen in. And our stores are all but gone.'},
       {who:'You',text:'But on the deep way, before the old shaft, there is a chamber full of living light. Growing things, more than anyone could eat.'},
       {who:'Torven',text:'Growing? Down there?'},
       {who:'Torven',text:'Then you have saved us. All of us, Veyra.'},
       {who:'Torven',text:'We will send a party to clear your road, and another to that chamber. Stores will go back with you.'},
       {who:'Torven',text:'Take your place in the rite. After today, everyone here will know your name.'}],
-      ()=>{state.story.caveCleared=1;state.stores=true;caption('Take your place in the rite.',6);log('story.arrive',{},'world');});},1300);
+      ()=>{state.story.caveCleared=1;state.stores=true;caption('Take your place in the rite.',6);log('story.arrive',{},'world');});}
+function arriveFromWest(){
+  state.mode='transition';$('fade').classList.add('on');log('world.enter',{world:'east',via:'deep ways'},'world');
+  setTimeout(()=>{loadWorld('east');state.story.arrived=1;Object.assign(state,{gateOpen:true,liftG:1,door1Open:true,lift1:1,door2Open:true,lift2:1});state.talked.out=1;state.talked.home=1;buildFigures();
+    Object.assign(player,{x:WORLD_W-110,y:GROUND-player.h,vx:0,vy:0,onGround:true,face:-1});state.lives=LIVES;renderLives();
+    camX=clamp(player.x+12-W*.42,0,WORLD_W-W);state.zone=zoneAt(player.x);A.setSpace(state.zone);updateHud();$('fade').classList.remove('on');state.mode='play';
+    state.arrivalTalk=true;},1300);   // Torven walks over first; he speaks once he is beside her (see update)
 }
 function setback(why){
   state.lives--;renderLives();
@@ -1445,6 +1447,7 @@ function update(dt){
       {who:'Father',text:'The stores will not last until someone clears that cave. Take this map. Find the Assembly, tell them what has happened, and bring back the light.'}],
       ()=>{caption('Go west, through the door behind the outpost.',7);log('story.map',{},'world');});return;}
   updateTorven(dt);
+  if(state.arrivalTalk){const g=torvenFig();if(g&&!g.walking&&Math.abs(player.x+player.w/2-g.x)<110&&(g.greeted||Math.abs(player.x+player.w/2-g.x)<70)){state.arrivalTalk=false;arrivalTalk();return;}}
   if(state.gateOpen&&Math.abs(player.x+player.w/2-torvenPos())<70){const key=state.carrying?'home':'out';
     if(!state.talked[key]){state.talked[key]=1;openDialog(torvenLines(key));log('dialog.torven',{leg:key},'world');return;}}
   if(state.carrying&&Math.abs(player.x+player.w/2-FATHER_X)<50){state.carrying=false;state.delivered++;A.fire('item.deliver',{cycle:state.loop,total:state.delivered,stores:!!state.stores},'world');

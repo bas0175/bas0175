@@ -123,9 +123,55 @@ export function buildHorizontal(name, D, X) {
 
   // ---------- gameplay pieces on the play plane ----------
   const mergeAdd = (list, mat, def) => { if (list.length) { const m = new THREE.Mesh(mergeSafe(list, def), mat); G.add(m); return m; } };
+  // Blocks on the play plane (cut stone on the road, raw rock in the caves) all come from rectangles; each one gets its
+  // own shape around its unchanged walking surface: sides cut in at different slants, a chipped corner now and then,
+  // its own depth, roundness and tint, sometimes two stacked courses, loose stones at the foot.
+  let ruinNext = false;
+  const variedOutline = (x, bot, w, h, r) => {
+    const top = bot + h, ins = Math.min(w * .12, 4 + r() * 10), big = ruinNext ? 2.2 : 1, chip = (ruinNext || r() < .45) ? (4 + r() * 7) * big : 0, chipR = r() < .45 ? (4 + r() * 7) * big : 0, pts = []; ruinNext = false;
+    if (chip) pts.push({ x: x + chip, y: top, top: true }, { x: x + r() * 2, y: top - chip, top: false }); else pts.push({ x, y: top, top: true });
+    const n = 1 + Math.floor(r() * 2); for (let i = 1; i <= n; i++) pts.push({ x: x + r() * ins, y: top - h * i / (n + 1), top: false });
+    pts.push({ x: x + r() * ins, y: bot, top: false }, { x: x + w - r() * ins, y: bot, top: false });
+    for (let i = n; i >= 1; i--) pts.push({ x: x + w - r() * ins, y: top - h * i / (n + 1), top: false });
+    if (chipR) pts.push({ x: x + w - r() * 2, y: top - chipR, top: false }, { x: x + w - chipR, y: top, top: true }); else pts.push({ x: x + w, y: top, top: true });
+    return pts;
+  };
+  const tint = (hex, r, k = .14) => { const c = new THREE.Color(hex), f = 1 + (r() - .5) * 2 * k; c.r *= f * (1 + (r() - .5) * .06); c.g *= f; c.b *= f * (1 + (r() - .5) * .06); return c.getHex(); };
+  const pebbles = [];
+  const footStones = (x, w, r) => { const n = r() < .6 ? 1 + Math.floor(r() * 4) : 0; for (let i = 0; i < n; i++) { const sz = 4 + r() * 9, g = rockGeo(sz * (1 + r() * .6), sz * (.5 + r() * .4), sz, 2000 + Math.floor(r() * 1e5)); g.translate(x + (r() < .5 ? -r() * 14 : w + r() * 14), 0, -14 - r() * 30); pebbles.push(g); } };
+  // Runs of blocks standing side by side on the ground (the deep ways' steps) are one set; each set gets a treatment:
+  // 0 cut stone (the default below), 1 one weathered rock shaped like stairs, 2 a ruin (heavy chips, a fallen slab, rubble).
+  const groups = arr => { const g = [], used = new Set(), byX = arr.map((b, i) => ({ b, i })).sort((p, q) => p.b.x - q.b.x);
+    let cur = null; for (const e of byX) { const onGround = Math.abs(e.b.y + e.b.h - 440) < 2;
+      if (cur && onGround && Math.abs(e.b.x - (cur[cur.length - 1].b.x + cur[cur.length - 1].b.w)) < 2) cur.push(e); else { if (cur && cur.length > 1) g.push(cur); cur = onGround ? [e] : null; } }
+    if (cur && cur.length > 1) g.push(cur); return g; };
+  const stairOutline = set => { const pts = [{ x: set[0].b.x + 4, y: 0, top: false }];
+    set.forEach(({ b }, j) => { const t = Y(b.y), x0 = b.x, x1 = b.x + b.w;
+      if (j === 0) pts.push({ x: x0, y: t * .55, top: false }); else pts.push({ x: x0, y: Y(set[j - 1].b.y), top: false }, { x: x0, y: t, top: false });
+      pts.push({ x: x0 + 1, y: t, top: true }, { x: x1 - 1, y: t, top: true }); });
+    const last = set[set.length - 1].b; pts.push({ x: last.x + last.w, y: Y(last.y) * .6, top: false }, { x: last.x + last.w - 6, y: 0, top: false }); return pts; };
+  const styled = new Map(), monoliths = [], slabs = [];
+  const setStyle = (arr, seed) => groups(arr).forEach((set, gi) => { const st = (gi + seed) % 3; set.forEach(e => styled.set(e.b, st));
+    if (st === 1) { const r = mulberry32(9100 + seed * 13 + gi); monoliths.push(loftRock(stairOutline(set), -170 - r() * 80, 6, { amp: 9 + r() * 5, freq: .022 + r() * .012, bevel: 40 + r() * 20, corner: 18 + r() * 14, seed: 950 + seed * 10 + gi, colTop: tint(0xb2c4d2, r), colSide: tint(0x5a6e7c, r, .18) }));
+      footStones(set[0].b.x, 0, r); const last = set[set.length - 1].b; footStones(last.x + last.w, 0, r); }
+    if (st === 2) { const r = mulberry32(9500 + seed * 13 + gi), b = set[Math.floor(r() * set.length)].b, side = r() < .5 ? -1 : 1, len = 60 + r() * 50;
+      const g = worldUVBox(len, 12 + r() * 8, 40 + r() * 20); g.rotateZ(side * (.35 + r() * .3)); g.translate(side < 0 ? set[0].b.x - len * .3 : set[set.length - 1].b.x + set[set.length - 1].b.w + len * .3, len * .22, -70 - r() * 40); slabs.push(g);
+      for (let k = 0; k < 3; k++) footStones(set[0].b.x + r() * 200, 0, r); } });
   // ledges: cut stone blocks
   {
-    const list = D.ledges.map((l, k) => loftRock(rectOutline(l.x, Y(l.y + l.h), l.w, l.h), -170, 6, { amp: 4, freq: .04, bevel: 30, corner: 10, seed: 40 + k, colTop: 0xffffff, colSide: 0xb4c2cc, colBottom: 0x55636d }));
+    const list = [];
+    setStyle(D.ledges, 0);
+    D.ledges.forEach((l, k) => {
+      if (styled.get(l) === 1) return;   // part of a rock staircase
+      const r = mulberry32(7100 + k * 31), bot = Y(l.y + l.h), z0 = -130 - r() * 90, ruin = styled.get(l) === 2;
+      const o = { amp: (ruin ? 7 : 3) + r() * 4, freq: .03 + r() * .03, bevel: 18 + r() * 26, corner: (ruin ? 2 : 6) + r() * 12, seed: 40 + k, ruin, colTop: tint(0xffffff, r, .08), colSide: tint(0xb4c2cc, r), colBottom: 0x55636d };
+      if (!ruin && l.h > 50 && r() < .5) {   // two courses: a lower stone set slightly in, the upper one carrying the walking surface
+        const split = l.h * (.4 + r() * .2);
+        list.push(loftRock(variedOutline(l.x + 3 + r() * 6, bot, l.w - 6 - r() * 10, split - 1.5, r).map(p => ({ ...p, top: false })), z0 + 10, 2, { ...o, seed: 70 + k, colTop: o.colSide }));
+        list.push(loftRock(variedOutline(l.x, bot + split, l.w, l.h - split, r), z0, 6, o));
+      } else { ruinNext = ruin; list.push(loftRock(variedOutline(l.x, bot, l.w, l.h, r), z0, 6, o)); }
+      if (Math.abs(bot) < 2) footStones(l.x, l.w, r);
+    });
     mergeAdd(list, cutStoneMat);
   }
   // pillars: old columns of stacked drums on the road, raw rock in the caves
@@ -156,13 +202,18 @@ export function buildHorizontal(name, D, X) {
   {
     const rocks = [], dark = [];
     D.rocks.forEach((k, i) => { const g = rockGeo(k.w * .55, k.h, 46, 30 + i); g.translate(k.x + k.w / 2, Y(k.y + k.h), -40); rocks.push(g); });
-    D.caverocks.forEach((k, i) => { const top = Y(k.y), bot = Y(k.y + k.h), out = rectOutline(k.x, bot, k.w, top - bot); rocks.push(loftRock(out, -200, 6, { amp: 10, bevel: 50, corner: 24, seed: 600 + i })); });
+    setStyle(D.caverocks, 1);
+    D.caverocks.forEach((k, i) => { if (styled.get(k) === 1) return; const r = mulberry32(8300 + i * 17), top = Y(k.y), bot = Y(k.y + k.h); ruinNext = styled.get(k) === 2;
+      rocks.push(loftRock(variedOutline(k.x, bot, k.w, top - bot, r), -150 - r() * 110, 6, { amp: 7 + r() * 7, freq: .025 + r() * .02, bevel: 34 + r() * 30, corner: 14 + r() * 18, seed: 600 + i, colTop: tint(0xb2c4d2, r), colSide: tint(0x5a6e7c, r, .18) }));
+      if (Math.abs(bot) < 2) footStones(k.x, k.w, r); });
     D.stalag.forEach((k, i) => { const pts = []; for (let j = 0; j <= 10; j++) { const u = j / 10; pts.push(new THREE.Vector2((k.w / 2 + 5) * Math.pow(1 - u, .8) * (1 + .1 * Math.sin(u * 9 + i)), u * k.h)); }
       const g = new THREE.LatheGeometry(pts, 10); g.translate(k.x + k.w / 2, Y(k.y + k.h), -4); rocks.push(g); });
     D.lowceil.forEach((k, i) => { const top = roof(k.x + k.w / 2) + 30, bot = Y(k.y + k.h), out = rectOutline(k.x - 20, bot, k.w + 40, top - bot).map(p => ({ ...p, top: false }));
       dark.push(loftRock(out, -260, 8, { amp: 14, bevel: 50, corner: 24, seed: 700 + i, colTop: 0x3a4854, colSide: 0x3a4854, colBottom: 0x5a6c78 })); });
     (D.waystones || []).forEach((ws, i) => [[0, 0, 22, 14], [3, -12, 16, 12], [6, -22, 10, 10]].forEach(([dx, dy, ww, hh], j) => { const g = rockGeo(ww / 2, hh, ww / 2, 800 + i * 3 + j, false); g.scale(1, .5, 1); g.translate(ws.x + dx, Y(GROUND + dy - hh / 2), -30); rocks.push(g); }));
     mergeAdd(rocks, caveRockMat, [.36, .43, .49]); mergeAdd(dark, caveRockMat, [.25, .3, .34]);
+    mergeAdd(pebbles, rockMat);   // loose stones at the foot of the blocks
+    mergeAdd(monoliths, caveRockMat, [.36, .43, .49]); mergeAdd(slabs, masonryMat(1, 0xa8b6c0));
   }
   // end walls (the world stops in rock)
   { const a = rockGeo(300, 900, 900, 91, false); a.translate(-320, 200, -200); const b = rockGeo(300, 900, 900, 92, false); b.translate(W + 300, 200, -200); mergeAdd([a, b], darkRockMat); }
