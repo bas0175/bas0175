@@ -35,6 +35,9 @@ input[type=range]{accent-color:var(--cold);width:100px}
 .layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 @media (max-width:960px){.layout{grid-template-columns:minmax(0,1fr)}}
 .stage{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#000}
+/* full screen: the stage, letterboxed to 16:9 on black */
+#fsWrap:fullscreen{background:#000;display:flex;align-items:center;justify-content:center}#fsWrap:-webkit-full-screen{background:#000;display:flex;align-items:center;justify-content:center}
+#fsWrap:fullscreen .stage{width:min(100vw,177.78vh);border:0;border-radius:0}#fsWrap:-webkit-full-screen .stage{width:min(100vw,177.78vh);border:0;border-radius:0}
 canvas#game{display:block;width:100%;aspect-ratio:16/9;position:relative}
 canvas#gl,canvas#glfg,canvas#ui{position:absolute;inset:0;width:100%;height:100%;display:block}
 canvas#glfg,canvas#ui{pointer-events:none}
@@ -103,6 +106,7 @@ section.notes p{margin:0}
       <p class="lede">An outpost keeper sends his daughter down the long road to the Assembly to bring back the light for their household: alone across the crevasses, through the bell gate, answered at the Assembly gate, into the rite, and home again. Then the cycle comes round.</p>
     </div>
     <div class="toolbar">
+      <button class="btn" id="fsBtn" type="button">Full screen</button>
       <button class="btn" id="pauseBtn" type="button">Pause</button>
       <button class="btn" id="muteBtn" type="button">Mute</button>
       <label for="vol">Level</label><input id="vol" type="range" min="0" max="1" step="0.01" value="0.8">
@@ -111,7 +115,7 @@ section.notes p{margin:0}
 
   <div class="layout">
     <div>
-      <div class="stage">
+      <div id="fsWrap"><div class="stage">
         <canvas id="gl" aria-hidden="true"></canvas>
         <canvas id="game" aria-label="Game view"></canvas>
         <canvas id="glfg" aria-hidden="true"></canvas>
@@ -126,8 +130,9 @@ section.notes p{margin:0}
             <h2>Once each cycle, the outpost sends one of its own.</h2>
             <p>Your father sends you to the Assembly for the household's light. Cross the long road alone (three falls and you return to the last checkpoint), ring the bells so they answer one another, answer the gate's call with your voice, take part in the rite, take the light, and carry it home.</p>
             <button class="go" id="startBtn" type="button">Set out</button>
+            <button class="btn" id="startFsBtn" type="button" style="margin-top:8px">Set out in full screen</button>
             <button class="btn" id="jumpBtnT" type="button" style="margin-top:8px">Jump to a scene (testing)</button>
-            <span class="keys">← → or A D move · J jump to a scene · Space / W jump (hold for height) · E ring, intone or take · Q turn a bell · 1–7 sing · M map (once you have it) · Esc pause · N mute</span>
+            <span class="keys">← → or A D move · J jump to a scene · Space / W jump (hold for height) · E ring, intone or take · Q turn a bell · 1–7 sing · M map (once you have it) · F full screen · Esc pause · N mute</span>
           </div>
         </div>
         <div class="overlay" id="pause" hidden>
@@ -165,7 +170,7 @@ section.notes p{margin:0}
             </div>
           </div>
         </div>
-      </div>
+      </div></div>
     </div>
 
     <aside>
@@ -1922,6 +1927,13 @@ $('jumpBtnT').onclick=openJump;$('jumpBtnP').onclick=openJump;$('jumpClose').onc
 document.getElementById('again').onclick=start;
 $('endExit').onclick=exitToTitle;$('resumeBtn').onclick=resume;$('restartCycleBtn').onclick=restartCycle;$('restartAllBtn').onclick=start;$('exitBtn').onclick=exitToTitle;
 $('pauseBtn').onclick=()=>state.mode==='paused'?resume():pause();
+// full screen: the stage alone, letterboxed on black (F, the toolbar button, or 'Set out in full screen')
+const isFull=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
+const fsLabel=()=>{$('fsBtn').textContent=isFull()?'Exit full screen':'Full screen';};
+function toggleFullscreen(on=!isFull()){const el=$('fsWrap');setTimeout(fsLabel,400);try{const r=on?(el.requestFullscreen||el.webkitRequestFullscreen).call(el):(document.exitFullscreen||document.webkitExitFullscreen).call(document);if(r&&r.catch)r.catch(()=>{});}catch(e){}}
+$('fsBtn').onclick=()=>toggleFullscreen();
+$('startFsBtn').onclick=()=>{toggleFullscreen(true);start();};
+['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,fsLabel));
 document.getElementById('endExport').onclick=exportJSON;
 document.getElementById('expJson').onclick=exportJSON;
 document.getElementById('expCsv').onclick=exportCSV;
@@ -1974,6 +1986,7 @@ window.addEventListener('keydown',e=>{
   if(state.mode==='map'){if(['KeyM','Escape','Enter','Space'].includes(e.code)){e.preventDefault();closeMap();}return;}
   if(e.code==='KeyM'&&!e.repeat){if(state.mode==='play'&&mapAvailable()){e.preventDefault();openMap();}else if(state.mode==='play')caption('You know this road. There is no map for it.',2.5);return;}
   if(e.code==='KeyN'){toggleMute();return;}
+  if(e.code==='KeyF'&&!e.repeat){toggleFullscreen();return;}
   
   
   if(state.mode==='dialog'){if(['KeyE','Enter','Space','NumpadEnter'].includes(e.code)){e.preventDefault();if(!e.repeat)advanceDialog();}return;}
