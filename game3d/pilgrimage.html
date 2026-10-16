@@ -688,7 +688,7 @@ function draw3D(t){
 }
 let vignette;
 function resize(){
-  const r=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  const r=canvas.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,1920/Math.max(1,r.width));   // never more than 1920 px across (full screen on a 4K or Retina screen)
   canvas.width=Math.max(1,Math.round(r.width*dpr));canvas.height=Math.max(1,Math.round(r.width*9/16*dpr));
   const s=canvas.width/W;ctx.setTransform(s,0,0,s,0,0);
   uiCanvas.width=canvas.width;uiCanvas.height=canvas.height;uiCtx.setTransform(s,0,0,s,0,0);

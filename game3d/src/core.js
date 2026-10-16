@@ -49,12 +49,29 @@ export function init(canvas, fgCanvas) {
   Object.assign(C, { renderer, scene, camera, composer, grade, key, hemi });
 }
 
+// Render resolution: the screen's pixel ratio, but never more than MAX_W pixels across (a 4K or Retina screen in
+// full screen would otherwise render 4-8x the pixels through the bloom), times a quality factor the governor below
+// lowers when frames run slow and raises again when there is headroom.
+const MAX_W = 1920;
+const Q = { scale: 1, w: 0, h: 0, ema: 16, last: 0, checkAt: 0 };
+function applyRes() {
+  const pr = Math.max(.35, Math.min(2, window.devicePixelRatio || 1, MAX_W / Math.max(1, Q.w)) * Q.scale);
+  C.renderer.setPixelRatio(pr); C.renderer.setSize(Q.w, Q.h, false); C.composer.setPixelRatio(pr); C.composer.setSize(Q.w, Q.h);
+  if (C.fg) { C.fg.renderer.setPixelRatio(pr); C.fg.renderer.setSize(Q.w, Q.h, false); }
+}
 export function resize(w, h) {
   if (!C.renderer) return;
-  C.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
-  C.renderer.setSize(w, h, false); C.composer.setSize(w, h);
-  if (C.fg) { C.fg.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); C.fg.renderer.setSize(w, h, false); }
+  Q.w = w; Q.h = h; applyRes();
 }
+function govern() {
+  const now = performance.now(), dt = Q.last ? now - Q.last : 16; Q.last = now;
+  if (dt > 1000) return;                                   // a tab switch or a pause, not a slow frame
+  Q.ema += (dt - Q.ema) * .05;
+  if (now < Q.checkAt) return; Q.checkAt = now + 1500;
+  if (Q.ema > 22 && Q.scale > .5) { Q.scale = Math.max(.5, Q.scale * .82); applyRes(); }
+  else if (Q.ema < 14 && Q.scale < 1) { Q.scale = Math.min(1, Q.scale * 1.12); applyRes(); }
+}
+export const quality = Q;
 
 // A world: a group plus its light sources and per-frame updates. Only one is visible at a time.
 export function makeWorld(name, mapY) {
@@ -64,6 +81,7 @@ export function makeWorld(name, mapY) {
 
 export function frame(o) {
   if (!C.renderer || !C.enabled) return;
+  govern();
   const w = C.worlds[o.world]; if (!w) return;
   for (const k in C.worlds) C.worlds[k].group.visible = C.worlds[k].fg.visible = C.worlds[k] === w;
   C.active = w;
