@@ -39,7 +39,6 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 - Journey (thatgamecompany, 2012).
 
 ## Open questions
-- Node granularity (the next decision).
 - Which Wagner opera; which pansori madang, singer and recording; which Rite version.
 - How to encode an interactive work (Journey): the designed graph, a canonical playthrough, or both.
 - What else is in the Survanic Assemblage, and whether it is analysed or only the source of the world's vocabulary.
