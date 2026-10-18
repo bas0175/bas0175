@@ -9,19 +9,47 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 
 ## Definitions (draft)
 - **Layers (L):** two aspects.
-  - Medium, fixed in advance and the same for every work: sound, text/voice, image, movement/gesture, object, space.
+  - Medium, sorted by craft (what is made, and traditionally by whom), after Higgins's art forms. The list is fixed and applied to every work; a layer a work does not use stays empty.
+
+    | Layer | Contains |
+    |---|---|
+    | Sound | music, sound design, non-verbal voice |
+    | Text | libretto, narration, spoken or written words |
+    | Movement | choreography, gesture, blocking |
+    | Costume | what bodies wear and carry |
+    | Scenography | set, props, ritual objects, architecture |
+    | Light | lighting as a designed element |
+    | Visual media | projected or screen images (assumed; to confirm) |
+    | Interaction | designed affordances by which someone outside the fixed score or design acts on the work |
+
   - Work: the Obsidian Cycle contains its three pieces. A layer is a (work, medium) pair, such as (Pilgrimage, sound).
-- **Vertices (V):** elements of the work. The same element can recur across pieces (Veyra, the Vorrakiel, the bells) and stays one vertex. An element is identifiable by a perceiver, persists or recurs, and belongs to a medium. One element may appear in several layers (a bell is an object and a sound).
-- **Edges (E):** a small fixed set of types:
-  - temporal: precedes, co-occurs
-  - derivational: varies, quotes
-  - functional: triggers, controls
-  - referential: represents
+- **Vertices (V):** recurring, nameable elements (a leitmotif, a jangdan, a gesture vocabulary, a prop, a character, a place), not moments in time.
+  - An element becomes a vertex only if it appears at least twice or relates to at least two other elements. (Proposed, to confirm.)
+  - An element present in two media is one vertex in two layers (the bell is object and sound). (Proposed, to confirm.)
+  - The same element recurring across pieces (Veyra, the Vorrakiel, the bells) stays one vertex.
+- **Edges (E):** two classes. (Proposed, to confirm.)
+  - Temporal (baseline): precedes, co-occurs. Derived by rule from a coded event timeline, never by hand. Co-occurrence across media is juxtaposition (multimedia) and does not count as coupling.
+  - Structural (coupling), hand-coded with a short justification each:
+    - varies (A to B): B is a recognizable transformation of A, in the same or another medium.
+    - quotes (A to B): B reproduces A recognizably in another piece or context.
+    - triggers (A to B): an occurrence of A cues an occurrence of B.
+    - controls (A to B): A continuously shapes a parameter of B.
+    - represents (A to B): A stands for B.
 - **Temporal dynamics (T):** sections within a work; repeated performances where they exist (Children of the Moon is performed 2 to 3 times in succession). Occurrences of an element are events in time, not new vertices.
 - **Attributes (A):** on vertices and edges: open or fixed (improvised or scored), maker (who authored it, where known), weight, plus medium-specific values (pitch, interval ratio, duration).
+  - On interaction vertices also: actor (performer, audience, visitor, player); agency (scripted, bounded, open); timescale (discrete, continuous); reach (surface: changes what sounds or shows; structure: changes what happens next).
+
+## Interaction
+- Performers responding to each other inside the score are triggers edges between other layers, not interaction.
+- Interaction vertices connect outward through controls and triggers; which layers they reach is a result.
+- The three pieces share one network and differ in interaction, which makes them a near-controlled comparison:
+  - Children of the Moon: the audience responds to sound.
+  - Relics of Shadow: visitors interact with the artifacts at set points.
+  - Pilgrimage: embodiment through gameplay; the player enacts the rite.
+- Pansori has a conventional audience interaction (chuimsae), so the interaction layer is not only a property of games.
 
 ## Measures
-- Inter-layer edge share: the fraction of all edges that cross from one layer to another.
+- Inter-layer edge share: the fraction of structural edges that cross from one layer to another, compared with the temporal baseline.
 - Node multiplexity: the fraction of vertices present in more than one layer.
 - Cross-work sharing: the fraction of vertices present in more than one piece (transmedia coupling, as distinct from intermedia coupling within a piece).
 - Severance: remove one layer and measure how much the rest fragments. Multimedia should survive; intermedia should fragment.
@@ -41,4 +69,5 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 ## Open questions
 - Which Wagner opera; which pansori madang, singer and recording; which Rite version.
 - How to encode an interactive work (Journey): the designed graph, a canonical playthrough, or both.
-- Node granularity: recurrence rule and one-node-many-layers still to confirm.
+- Confirm: the vertex rules, the two edge classes, and what visual media covers.
+- Children of the Moon: does the audience's response feed back into the performance?
