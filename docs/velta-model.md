@@ -8,8 +8,10 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 - Fallback claim: even without a threshold, a continuum of coupling across works shows that reading works as networks is valuable.
 
 ## Definitions (draft)
-- **Layers (L):** media, fixed in advance and the same for every work: sound, text/voice, image, movement/gesture, object, space.
-- **Vertices (V):** elements of the work. An element is identifiable by a perceiver, persists or recurs, and belongs to a medium. One element may appear in several layers (a bell is an object and a sound).
+- **Layers (L):** two aspects.
+  - Medium, fixed in advance and the same for every work: sound, text/voice, image, movement/gesture, object, space.
+  - Work, nested: the Survanic Assemblage contains the Obsidian Cycle, which contains its three pieces. A layer is a (work, medium) pair, such as (Pilgrimage, sound).
+- **Vertices (V):** elements of the work. The same element can recur across pieces (Veyra, the Vorrakiel, the bells) and stays one vertex. An element is identifiable by a perceiver, persists or recurs, and belongs to a medium. One element may appear in several layers (a bell is an object and a sound).
 - **Edges (E):** a small fixed set of types:
   - temporal: precedes, co-occurs
   - derivational: varies, quotes
@@ -21,6 +23,7 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 ## Measures
 - Inter-layer edge share: the fraction of all edges that cross from one layer to another.
 - Node multiplexity: the fraction of vertices present in more than one layer.
+- Cross-work sharing: the fraction of vertices present in more than one piece (transmedia coupling, as distinct from intermedia coupling within a piece).
 - Severance: remove one layer and measure how much the rest fragments. Multimedia should survive; intermedia should fragment.
 - Every score is compared against randomized networks of the same size and degree distribution.
 
@@ -29,7 +32,7 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 - A second coder encodes a subset; report agreement.
 
 ## Corpus (rough)
-- The Obsidian Cycle (Children of the Moon, Relics of Shadow, Pilgrimage). Its network lives only in the work.
+- The Obsidian Cycle, analysed as three pieces (Children of the Moon, Relics of Shadow, Pilgrimage) and as a whole. Its network lives only in the work. The Cycle sits inside a larger collection, the Survanic Assemblage.
 - The Rite of Spring (Stravinsky, Nijinsky, Roerich, 1913).
 - A Wagner opera, undecided.
 - A pansori performance.
@@ -39,4 +42,5 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 - Node granularity (the next decision).
 - Which Wagner opera; which pansori madang, singer and recording; which Rite version.
 - How to encode an interactive work (Journey): the designed graph, a canonical playthrough, or both.
-- Whether the Obsidian Cycle is analysed as one work or as three pieces.
+- What else is in the Survanic Assemblage, and whether it is analysed or only the source of the world's vocabulary.
+- Node granularity: recurrence rule and one-node-many-layers still to confirm.
