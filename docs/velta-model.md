@@ -10,7 +10,7 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 ## Definitions (draft)
 - **Layers (L):** two aspects.
   - Medium, fixed in advance and the same for every work: sound, text/voice, image, movement/gesture, object, space.
-  - Work, nested: the Survanic Assemblage contains the Obsidian Cycle, which contains its three pieces. A layer is a (work, medium) pair, such as (Pilgrimage, sound).
+  - Work: the Obsidian Cycle contains its three pieces. A layer is a (work, medium) pair, such as (Pilgrimage, sound).
 - **Vertices (V):** elements of the work. The same element can recur across pieces (Veyra, the Vorrakiel, the bells) and stays one vertex. An element is identifiable by a perceiver, persists or recurs, and belongs to a medium. One element may appear in several layers (a bell is an object and a sound).
 - **Edges (E):** a small fixed set of types:
   - temporal: precedes, co-occurs
@@ -32,7 +32,7 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 - A second coder encodes a subset; report agreement.
 
 ## Corpus (rough)
-- The Obsidian Cycle, analysed as three pieces (Children of the Moon, Relics of Shadow, Pilgrimage) and as a whole. Its network lives only in the work. The Cycle sits inside a larger collection, the Survanic Assemblage.
+- The Obsidian Cycle, analysed as three pieces (Children of the Moon, Relics of Shadow, Pilgrimage) and as a whole. Its network lives only in the work. The Cycle sits inside a larger cosmos of works, the Survanic Assemblage, which is out of scope: referenced in the text and mapped in an appendix, not encoded.
 - The Rite of Spring (Stravinsky, Nijinsky, Roerich, 1913).
 - A Wagner opera, undecided.
 - A pansori performance.
@@ -41,5 +41,4 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 ## Open questions
 - Which Wagner opera; which pansori madang, singer and recording; which Rite version.
 - How to encode an interactive work (Journey): the designed graph, a canonical playthrough, or both.
-- What else is in the Survanic Assemblage, and whether it is analysed or only the source of the world's vocabulary.
 - Node granularity: recurrence rule and one-node-many-layers still to confirm.
