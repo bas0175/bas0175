@@ -37,14 +37,16 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
     - represents (A to B): A stands for B.
 - **Temporal dynamics (T):** sections within a work; repeated performances where they exist (Children of the Moon is performed 2 to 3 times in succession). Occurrences of an element are events in time, not new vertices.
 - **Attributes (A):** on vertices and edges: open or fixed (improvised or scored), maker at two levels (real: who made it in the world; diegetic: who made it inside the fiction, such as the Fourth Era composer, the Codex scholars, or an anonymous or disputed attribution), weight, plus medium-specific values (pitch, interval ratio, duration).
-  - On interaction vertices also: actor (performer, audience, visitor, player); agency (scripted, bounded, open); timescale (discrete, continuous); reach (surface: changes what sounds or shows; structure: changes what happens next); dependence (gating: the work waits for the action; slotted: the work reserves a place for it but proceeds without it; free: possible at any time, nothing reserved).
+  - On interaction vertices also: actor (performer, audience, visitor, player); agency (scripted, bounded, open); timescale (discrete, continuous); reach (surface: changes what sounds or shows; structure: changes what happens next).
+  - On each edge leaving an interaction vertex: dependence, judged at the target the edge reaches, not at the whole work (gating: the target waits for the action; slotted: a place is reserved for the action but the target proceeds without it; free: possible at any time, nothing reserved).
+  - On vertices: aliases. One figure under several names is one vertex (Kreven, Doran ti Krekaran, formerly Krevan).
 
 ## Interaction
 - Performers responding to each other inside the score are triggers edges between other layers, not interaction. The same holds for a performer-held controller: the Vorrakiel's tilt shaping dome spatialization is a controls edge from movement to sound.
 - Interaction vertices connect outward through controls and triggers; which layers they reach is a result.
 - The three pieces share one network and differ in interaction, which makes them a near-controlled comparison:
   - Children of the Moon: the audience responds to sound, antiphonally. The cantor's call triggers the response, which fills a reserved slot; the cantor proceeds whether or not anyone responds (slotted).
-  - Relics of Shadow: visitors interact with the artifacts at set points; proximity-driven, so likely free (to confirm).
+  - Relics of Shadow: proximity-driven, in a narrow zone around each artifact, not the whole room. Entering the zone acts on that artifact, which waits for a visitor (gating at the artifact); the room as a whole does not wait. Whether distance inside the zone shapes the sound (controls) or only starts it (triggers) is to confirm.
   - Pilgrimage: embodiment through gameplay; the player enacts the rite.
 - Pansori has a conventional audience interaction (chuimsae), so the interaction layer is not only a property of games.
 - Call and response recurs across the Cycle: the antiphony in Children of the Moon and the gate check-in in Pilgrimage (call and response on keys 1 to 7). The game version is gating: the gate does not open without the response. Candidate cross-piece edge (varies).
@@ -74,6 +76,5 @@ Decisions made in conversation, October 2026. Draft: everything here can still c
 ## Open questions
 - Which Wagner opera; which pansori madang, singer and recording; which Rite version.
 - How to encode an interactive work (Journey): the designed graph, a canonical playthrough, or both.
-- Kreven and Doran ti Krekaran: one vertex or two (identity across pieces depends on it).
 - "Children of the Moon generates the network" is a claim about design derivation, not premiere order (Relics opens in January 2027, before Children in April).
 - Confirm: the vertex rules, the two edge classes, and what visual media covers.
