@@ -129,8 +129,10 @@ section.notes p{margin:0}
             <span class="eyebrow">Headphones recommended</span>
             <h2>Once each cycle, the outpost sends one of its own.</h2>
             <p>Your father sends you to the Assembly for the household's light. Cross the long road alone (three falls and you return to the last checkpoint), ring the bells so they answer one another, answer the gate's call with your voice, take part in the rite, take the light, and carry it home.</p>
+            <button class="go" id="continueBtn" type="button" hidden style="margin-bottom:8px">Continue</button>
             <button class="go" id="startBtn" type="button">Set out</button>
             <button class="btn" id="startFsBtn" type="button" style="margin-top:8px">Set out in full screen</button>
+            <button class="btn" id="loadFileT" type="button" style="margin-top:8px">Load a save file</button>
             <button class="btn" id="jumpBtnT" type="button" style="margin-top:8px">Jump to a scene (testing)</button>
             <span class="keys">← → or A D move · J jump to a scene · Space / W jump (hold for height) · E ring, intone or take · Q turn a bell · 1–7 sing · M map (once you have it) · F full screen · Esc pause · N mute</span>
           </div>
@@ -143,6 +145,8 @@ section.notes p{margin:0}
               <button class="go" id="resumeBtn" type="button">Resume</button>
               <button class="btn" id="restartCycleBtn" type="button">Restart this cycle</button>
               <button class="btn" id="restartAllBtn" type="button">Restart from the beginning</button>
+              <button class="btn" id="saveFileBtn" type="button">Save to file</button>
+              <button class="btn" id="loadFileP" type="button">Load from file</button>
               <button class="btn" id="jumpBtnP" type="button">Jump to a scene</button>
               <button class="btn" id="exitBtn" type="button">Exit to title</button>
             </div>
@@ -214,6 +218,7 @@ section.notes p{margin:0}
   </section>
 </div>
 
+<input type="file" id="saveFileIn" accept=".json,application/json" hidden>
 <div id="errBox" hidden style="position:fixed;left:12px;right:12px;bottom:12px;z-index:99;background:#2a0e0e;color:#ffd9d0;border:1px solid #a04a3a;border-radius:6px;padding:10px 12px;font:12px/1.4 'IBM Plex Mono',monospace;white-space:pre-wrap;max-height:40vh;overflow:auto"></div>
 <script>
 /* Error reporter: shows the real message on the page (the console may only say "Script error." when the page runs inside a preview frame or an extension intercepts it). */
@@ -1821,7 +1826,7 @@ function render(){
 
 /* ---------- UI ---------- */
 function showEnd(){
-  state.mode='end';
+  state.mode='end';store.clear();refreshContinue();   // the journey is complete: the next start is a new one
   const lit=new Set(LOG.filter(e=>e.event==='edge.satisfied').map(e=>e.params.edge)).size;
   const mean=state.ritualHistory.length?state.ritualHistory.reduce((a,b)=>a+b,0)/state.ritualHistory.length:0;
   document.getElementById('stats').innerHTML=[['Phrases',state.phraseCount],['Relations lit',`${lit}/${graph.edges.length}`],['Rite accord',`${Math.round(mean*100)}%`]].map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
@@ -1854,16 +1859,17 @@ function restartCycle(){
   log('loop.restart',{loop:state.loop},'world');resetLoop();state.mode='play';sendOff();
 }
 function exitToTitle(){
+  autosave(true);refreshContinue();
   ['pause','end','dialog'].forEach(id=>$(id).hidden=true);dlg=null;$('fade').classList.remove('on');
   stopIntone();state.mode='title';log('session.exit',{},'world');$('title').hidden=false;if(A.ctx)A.ctx.suspend();
 }
-function start(){document.body.classList.add('started');
+function start(sure){if(!sure&&!confirmNew())return;store.clear();refreshContinue();document.body.classList.add('started');
   A.init();['title','end','pause'].forEach(id=>$(id).hidden=true);$('fade').classList.remove('on');
   state.loop=1;state.phraseCount=0;state.ritualHistory=[];everLit.clear();
   log('session.start',{graph:graph.name,provisional:graph.provisional},'world');
   resetLoop();state.mode='play';sendOff();canvas.focus?.();
 }
-document.getElementById('startBtn').onclick=start;
+document.getElementById('startBtn').onclick=()=>start();
 /* ---------- testing: jump straight to a scene ---------- */
 function groundAt(x){let best=null;for(const s of solids())if(x>=s.x&&x<=s.x+s.w&&s.y>CEIL+40&&(best===null||s.y<best))best=s.y;
   for(const q of PLATS)if(x>=q.x&&x<=q.x+q.w&&(best===null||q.y<best))best=q.y;return best??GROUND;}
@@ -1925,14 +1931,14 @@ $('jumpList').onclick=e=>{const b=e.target.closest('button[data-i]');if(b)jumpTo
 $('jumpBtnT').onclick=openJump;$('jumpBtnP').onclick=openJump;$('jumpClose').onclick=closeJump;
 
 document.getElementById('again').onclick=start;
-$('endExit').onclick=exitToTitle;$('resumeBtn').onclick=resume;$('restartCycleBtn').onclick=restartCycle;$('restartAllBtn').onclick=start;$('exitBtn').onclick=exitToTitle;
+$('endExit').onclick=exitToTitle;$('resumeBtn').onclick=resume;$('restartCycleBtn').onclick=restartCycle;$('restartAllBtn').onclick=()=>start();$('exitBtn').onclick=exitToTitle;
 $('pauseBtn').onclick=()=>state.mode==='paused'?resume():pause();
 // full screen: the stage alone, letterboxed on black (F, the toolbar button, or 'Set out in full screen')
 const isFull=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
 const fsLabel=()=>{$('fsBtn').textContent=isFull()?'Exit full screen':'Full screen';};
 function toggleFullscreen(on=!isFull()){const el=$('fsWrap');setTimeout(fsLabel,400);try{const r=on?(el.requestFullscreen||el.webkitRequestFullscreen).call(el):(document.exitFullscreen||document.webkitExitFullscreen).call(document);if(r&&r.catch)r.catch(()=>{});}catch(e){}}
 $('fsBtn').onclick=()=>toggleFullscreen();
-$('startFsBtn').onclick=()=>{toggleFullscreen(true);start();};
+$('startFsBtn').onclick=()=>{if(!confirmNew())return;toggleFullscreen(true);start(true);};
 ['fullscreenchange','webkitfullscreenchange'].forEach(ev=>document.addEventListener(ev,fsLabel));
 document.getElementById('endExport').onclick=exportJSON;
 document.getElementById('expJson').onclick=exportJSON;
@@ -1944,9 +1950,9 @@ document.getElementById('graphFile').onchange=async ev=>{
   catch(err){msg.textContent=`Could not load graph: ${err.message}`;}
 };
 const muteBtn=document.getElementById('muteBtn');
-function toggleMute(){A.muted=!A.muted;muteBtn.textContent=A.muted?'Unmute':'Mute';A.setLevel();}
+function toggleMute(){A.muted=!A.muted;muteBtn.textContent=A.muted?'Unmute':'Mute';A.setLevel();savePrefs();}
 muteBtn.onclick=toggleMute;
-document.getElementById('vol').oninput=e=>{A.vol=+e.target.value;A.setLevel();};
+document.getElementById('vol').oninput=e=>{A.vol=+e.target.value;A.setLevel();savePrefs();};
 
 const BANK_EVENTS=[['voice.tone','Her voice (looped, pitched)'],['call.hum','Wall hum (pitched)'],['step','Footstep'],['drip','Cave drip (replaces the five recorded drips)'],['jump','Jump'],['land','Land'],['stone.strike','Stone strike (pitched)'],['stone.turn','Stone turn'],['relation.lit','Relation lit'],['threshold.open','Threshold opens'],['ritual.intone','Intone (looped, pitched)'],['ritual.choir','Order answers (pitched)'],['loop.return','Return'],['kreven.strike','Kreven strikes the staff into the ground (rite begins)'],['kreven.raise','Kreven raises the staff (light rising)'],['kreven.open','Kreven opens his arms (light falling; at rest now and then)'],['kreven.point','Kreven points the staff to the alcove (rite complete)']];
 document.getElementById('bankBody').innerHTML=BANK_EVENTS.map(([n,d])=>`<tr data-n="${n}"><td><code>${n}</code><div class="d">${d}</div></td><td class="st">synth</td><td style="white-space:nowrap"><label class="btn sm">Load<input type="file" accept="audio/*" hidden></label> <button class="btn sm" data-a="test" type="button">▶</button> <button class="btn sm" data-a="clear" type="button">×</button></td></tr>`).join('');
@@ -2004,6 +2010,57 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys[k]=false;if(e.code==='KeyE'){keys.e=false;stopIntone();}
   const dg=/^(Digit|Numpad)([1-7])$/.exec(e.code);if(dg)A.voiceStop('k'+(+dg[2]-1));});
 window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;stopIntone();A.voiceStopAll();});
+
+/* ---------- saving progress ----------
+   Autosave to the browser (localStorage) at checkpoints: each new stretch of road, each place in the descent and the
+   shaft, and whenever the story moves on (a cycle, the rite, the light, a door). Continue on the title resumes at the
+   last one. Save to file / Load from file (pause menu; Load on the title too) keep a copy outside the browser, since
+   Safari can clear a site's storage after about a week away. Volume and mute are remembered as well. */
+const SAVE_KEY='obsidian-cycle-iii.save.v1',PREFS_KEY='obsidian-cycle-iii.prefs';
+const store={get(){try{const v=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');return v&&v.v===1?v:null;}catch(e){return null;}},
+  set(v){try{localStorage.setItem(SAVE_KEY,JSON.stringify(v));return true;}catch(e){return false;}},clear(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}};
+const SAVE_FLAGS=['stores','door1Open','door1WOpen','liftW','returnBells','door2Open','gateOpen','lift1','lift2','liftG','carrying','gathered','delivered','phraseCount','arrivalTalk'];
+function vsPart(){const p=player,feet=p.y+p.h;return VS===DESCENT?(feet>=DESCENT.checkpoints[1].L.y-2?'mid':'top'):(feet<SHAFT.top.y+200?'top':'foot');}
+function snapshot(){
+  const p=player,s={v:1,at:Date.now(),loop:state.loop,world:WORLD,story:JSON.parse(JSON.stringify(state.story||{})),talked:{...state.talked},ritualDone:!!ritual.done,ritualHistory:state.ritualHistory||[],face:p.face||1};
+  SAVE_FLAGS.forEach(k=>s[k]=state[k]);
+  if(state.inShaft){s.vs=VS===DESCENT?'descent':'shaft';s.part=vsPart();s.where=s.vs==='descent'?'the descent':'the shaft';}else{s.x=Math.round(p.x);s.where=zoneName(state.zone);}
+  return s;}
+function restore(s){
+  A.init();if(A.ctx)A.ctx.resume();['jump','title','pause','end','dialog'].forEach(id=>$(id).hidden=true);dlg=null;$('fade').classList.remove('on');document.body.classList.add('started');
+  stopIntone();A.voiceStopAll();state.mode='play';state.dying=null;everLit.clear();
+  if(s.vs==='descent')toDescent(s.part==='mid'?'mid':false);else if(s.vs==='shaft')toShaft(s.part==='top');else{setCycle(s.loop);if(s.world==='west')loadWorld('west');}
+  state.loop=s.loop;state.story=JSON.parse(JSON.stringify(s.story||{}));state.talked={...(s.talked||{})};SAVE_FLAGS.forEach(k=>{if(k in s)state[k]=s[k];});
+  state.ritualHistory=s.ritualHistory||[];if(s.ritualDone)riteDone();
+  if(state.returnBells&&!state.door1WOpen)closeReturnBells();
+  buildFigures();{const g=torvenFig();if(g&&state.talked.out&&!state.arrivalTalk)g.greeted=true;}
+  if(!s.vs){placeAt(s.x,s.face);camX=clamp(player.x+12-W*.42,0,WORLD_W-W);state.zone=zoneAt(player.x+player.w/2);A.setSpace(state.zone);}
+  state.lives=LIVES;renderLives();state.graceUntil=nowS()+1.5;updateHud();renderRelations();
+  lastSaveKey=saveKey();caption(`Cycle ${state.loop} of ${LOOPS} · ${s.where}`,4);log('session.continue',{loop:s.loop,where:s.where},'world');canvas.focus?.();
+}
+let lastSaveKey='';
+function saveKey(){const sec=state.inShaft?'vs:'+(VS===DESCENT?'d':'s')+vsPart():WORLD+':'+SECTIONS.findIndex(q=>player.x>=q.x0&&player.x<q.x1);
+  return [state.loop,sec,state.zone,ritual.done,state.carrying,state.gathered,state.delivered,state.gateOpen,state.door1Open,state.door1WOpen,state.door2Open,state.stores,state.arrivalTalk,JSON.stringify(state.story)].join('|');}
+function autosave(force){
+  if(state.mode!=='play'&&!force)return;if(state.mode==='title'||state.mode==='end'||state.dying||ritual.active||dinner.on)return;
+  if(!player.onGround&&!player.mantle&&!force)return;
+  const k=saveKey();if(k===lastSaveKey&&!force)return;lastSaveKey=k;store.set(snapshot());
+}
+function confirmNew(){return !store.get()||confirm('Start a new journey? This replaces your saved progress.');}
+function refreshContinue(){const s=store.get(),b=$('continueBtn');b.hidden=!s;if(s)b.textContent=`Continue · cycle ${s.loop}, ${s.where}`;}
+$('continueBtn').onclick=()=>{const s=store.get();if(s)restore(s);};
+$('saveFileBtn').onclick=()=>{const s=state.mode==='title'?store.get():snapshot();if(!s)return;
+  download(`obsidian-cycle-iii-save-cycle${s.loop}-${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(s),'application/json');caption('Saved to a file.',3);};
+const pickSave=()=>{$('saveFileIn').value='';$('saveFileIn').click();};
+$('loadFileT').onclick=pickSave;$('loadFileP').onclick=pickSave;
+$('saveFileIn').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{const s=JSON.parse(await f.text());if(!s||s.v!==1||!s.loop)throw 0;store.set(s);refreshContinue();restore(s);}
+  catch(err){alert('That file is not a save from this game.');}};
+// volume and mute, remembered
+const prefs=(()=>{try{return JSON.parse(localStorage.getItem(PREFS_KEY)||'{}');}catch(e){return {};}})();
+const savePrefs=()=>{try{localStorage.setItem(PREFS_KEY,JSON.stringify({vol:A.vol,muted:A.muted}));}catch(e){}};
+if(typeof prefs.vol==='number'){A.vol=prefs.vol;$('vol').value=prefs.vol;}if(prefs.muted){A.muted=true;muteBtn.textContent='Unmute';}
+refreshContinue();
 
 /* ---------- boot ---------- */
 buildStones();buildFigures();renderRelations();
@@ -2065,7 +2122,7 @@ function drawMap(t){
   ctx.fillStyle='rgba(48,40,32,.55)';ctx.font='11px ui-monospace,monospace';ctx.textAlign='center';ctx.fillText('M or Esc to fold the map away',W/2,my+mh-14);
   ctx.restore();
 }
-function frame(ts){const dt=Math.min(.033,(ts-last)/1000);last=ts;if(state.mode==='play'){update(dt);trackMap();}else if(state.mode==='dinner')updateDinner();else if(state.mode==='dialog'&&!state.inShaft&&!state.dying&&(!player.onGround||Math.abs(player.vx)>1)){movePlayer(dt);camX=lerp(camX,clamp(player.x+12-W*.42,0,WORLD_W-W),.12);}render();requestAnimationFrame(frame);}
+function frame(ts){const dt=Math.min(.033,(ts-last)/1000);last=ts;if(state.mode==='play'){update(dt);trackMap();autosave();}else if(state.mode==='dinner')updateDinner();else if(state.mode==='dialog'&&!state.inShaft&&!state.dying&&(!player.onGround||Math.abs(player.vx)>1)){movePlayer(dt);camX=lerp(camX,clamp(player.x+12-W*.42,0,WORLD_W-W),.12);}render();requestAnimationFrame(frame);}
 requestAnimationFrame(frame);
 </script>
 </body>
