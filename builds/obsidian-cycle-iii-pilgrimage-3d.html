@@ -4603,7 +4603,8 @@ const SPACES={west:{rt:5.2,send:.5},outpost:{rt:2.4,send:.3},road:{rt:4.2,send:.
 const BX=3120+CV;   // the bell gate (the earlier threshold chamber) sits at the end of the long road
 const SLOTS=[{x:1270+BX,top:GROUND},{x:1490+BX,top:360},{x:1730+BX,top:300},{x:1990+BX,top:GROUND},{x:2150+BX,top:GROUND}];
 const DOOR1={x:2236+BX,y:200,w:28,h:240};    // bell gate, east door
-const DOOR1W={x:1150+BX,y:200,w:28,h:240};   // bell gate, west door: drops shut when she takes the light, so the bells must be rung again (in reverse) on the way home
+const DOOR1W={x:1150+BX,y:200,w:28,h:240};   // bell gate, west door: drops shut when she takes the light; on the way home the exit bell beside it opens it
+const EXIT_BELL={x:1150+BX+28+40,y:322};   // hangs on the chamber wall just inside the west door
 const DOORG={x:4500+RD,y:200,w:28,h:240};    // Assembly gate (check-in)
 const DOOR2={x:5660+RD,y:200,w:28,h:240};    // alcove
 const CIRCLE={x:5080+RD,r:78};
@@ -4902,6 +4903,7 @@ const A={
   }
 };
 const SYNTH={
+  'exit.bell'(p,t){A.stone(PENTA[0]/2,5.5,p.x,.32,t);A.stone(PENTA[4]/2,3.2,p.x,.12,t+.01);},
   'kreven.strike'(p,t){const {pan,gain}=A.pos(p.x);const o=A.out(pan,gain*.5,1.3);A.tone(o,t,62,.5,1,.002,38);A.noise(o,t,.35,700,.9,.002,200,'lowpass');A.noise(o,t+.04,.5,2600,1.5,.01);},
   'kreven.raise'(p,t){const {pan,gain}=A.pos(p.x);A.noise(A.out(pan,gain*.14,1.2),t,.7,500,1.2,.25,2200);},
   'creature.touch'(p,t){const o=A.out(0,.12,1.4);[1975,1568,1175,880].forEach((f,i)=>A.tone(o,t+i*.07,f,.5,.8,.005,f*.7));},
@@ -5835,6 +5837,7 @@ function setHint(t){
   if(state.inShaft){$('hint').textContent=t<state.captionUntil?state.caption:'';state.hint=null;return;}
   if(ritual.active)h=t<ritual.t0?'Stand in the light. The rite begins.':'Hold E as the light rises · release as it falls';
   else if(t<state.captionUntil)h=state.caption;
+  else if(nearExitBell())h='E strike the exit bell';
   else if(nearStone&&!bellAwake(nearStone.id))h='This bell is silent this cycle.';
   else if(nearStone&&!bellsOpen())h='E strike · Q turn the bell';
   else if(nearAltar())h='E take the light';
@@ -5846,7 +5849,7 @@ function setHint(t){
   else if(state.carrying)h=z==='outpost'?'Bring the light to your father.':'Carry the light home to the outpost.';
   else if(z==='outpost')h=state.delivered>=state.loop?'':'Walk east, toward the Assembly.';
   else if((z==='road'||z==='road2')&&t-state.loopT0<40&&!state.carrying)h='Space to jump · hold for height';
-  else if(z==='bells'&&!bellsOpen())h=phrase?'Keep the bells ringing.':state.returnBells?'The bells have turned. Ring them again, the other way round.':'Read the wall. Ring the bells so they answer one another.';
+  else if(z==='bells'&&!bellsOpen())h=phrase?'Keep the bells ringing.':state.returnBells?'The way out has shut. Strike the exit bell by the door.':'Read the wall. Ring the bells so they answer one another.';
   else if(z==='gate'&&!state.gateOpen)h=call.state==='calling'?'The gate sings. Listen.':'Answer the gate · keys 1–7';
   else if(z==='hall'&&!ritual.done)h='Step into the circle of light.';
   else if(z==='hall'&&ritual.done)h='The alcove beyond is open.';
@@ -6074,6 +6077,29 @@ function drawCircle(t){
   const a=state.door1Open?.18+.1*Math.sin(t*2):.06;ctx.strokeStyle=`rgba(230,240,246,${ritual.active?.15:a})`;ctx.lineWidth=1;
   ctx.beginPath();ctx.ellipse(x,GROUND+2,CIRCLE.r,8,0,0,Math.PI*2);ctx.stroke();
 }
+/* The exit bell: one bell by the west door, inside the bell chamber. On the way home the door has dropped shut;
+   striking this bell (E) opens it, like a bell at a gate. (Ringing the turned bells still opens it too.) */
+const exitBell={last:-99,swing:0};
+const exitBellLive=()=>WORLD==='east'&&state.returnBells&&!state.door1WOpen;
+function nearExitBell(){return exitBellLive()&&Math.abs(player.x+player.w/2-EXIT_BELL.x)<52&&player.onGround;}
+function ringExitBell(){const t=nowS();if(t-exitBell.last<.6)return;exitBell.last=t;exitBell.swing=.5;
+  A.fire('exit.bell',{x:EXIT_BELL.x},'player');
+  setTimeout(()=>{if(!exitBellLive())return;state.door1WOpen=true;A.fire('threshold.open',{x:DOOR1W.x,via:'exit bell'},'world');caption('The door lifts.',3);},650);}
+function drawExitBell(t){
+  const x=EXIT_BELL.x-camX;if(x<-60||x>W+60||WORLD!=='east')return;
+  const live=exitBellLive(),el=t-exitBell.last,sw=exitBell.swing*Math.exp(-el*1.6)*Math.sin(el*9),y0=EXIT_BELL.y-70;
+  ctx.save();ctx.strokeStyle='#2a333a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x-22,y0);ctx.lineTo(x,y0);ctx.stroke();   // the bracket
+  ctx.translate(x,y0);ctx.rotate(sw);
+  ctx.strokeStyle='#5a4a3a';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,16);ctx.stroke();   // the cord
+  const glow=live?.35+.25*Math.sin(t*2.2):0,ring=Math.max(0,1-el/2.4);
+  if(glow+ring>.02){const g=ctx.createRadialGradient(0,34,2,0,34,46);g.addColorStop(0,`rgba(242,190,110,${.35*(glow+ring)})`);g.addColorStop(1,'rgba(242,190,110,0)');ctx.fillStyle=g;ctx.fillRect(-46,-12,92,92);}
+  ctx.fillStyle=mix('#3d4a52','#e9c48e',Math.min(1,ring*.8+glow*.3));
+  ctx.beginPath();ctx.moveTo(-6,16);ctx.quadraticCurveTo(-9,30,-15,46);ctx.lineTo(15,46);ctx.quadraticCurveTo(9,30,6,16);ctx.closePath();ctx.fill();   // the bell
+  ctx.strokeStyle='#05080b';ctx.lineWidth=1.2;ctx.stroke();ctx.fillStyle='#14100c';ctx.beginPath();ctx.arc(0,47,3,0,Math.PI*2);ctx.fill();   // the clapper
+  ctx.restore();
+  if(ring>0){ctx.save();for(let k=0;k<3;k++){const r=18+((el*60+k*28)%80);ctx.strokeStyle=`rgba(242,178,90,${ring*(1-(r-18)/80)*.6})`;ctx.lineWidth=1.2;ctx.beginPath();ctx.ellipse(x,y0+34,r,r*.8,0,0,Math.PI*2);ctx.stroke();}ctx.restore();}
+  if(nearExitBell()){ctx.fillStyle='rgba(230,240,245,.85)';ctx.beginPath();ctx.moveTo(x,y0-18);ctx.lineTo(x+4,y0-13);ctx.lineTo(x,y0-8);ctx.lineTo(x-4,y0-13);ctx.closePath();ctx.fill();}
+}
 function drawStone(s,t){
   const x=s.x-camX;if(x<-80||x>W+80)return;
   const a=amp(s,t),y=s.top,h=56;
@@ -6176,7 +6202,7 @@ function render(){
   if(WORLD==='east'){drawLoopMarks();drawPanel(t);drawRubble(t);}
   drawFigures(t);
   if(WORLD==='east'){drawDoor(DOOR1,state.lift1);drawDoor(DOOR1W,state.liftW);drawDoor(DOORG,state.liftG);drawDoor(DOOR2,state.lift2);drawCircle(t);drawScore(t);drawShards(t);
-    stones.forEach(s=>drawStone(s,t));}
+    stones.forEach(s=>drawStone(s,t));drawExitBell(t);}
   drawCreatures(t);drawPlayer();if(state.carrying&&!state.inShaft)shard(player.x+player.w/2+player.face*14-camX,player.y+player.h-46+Math.sin(t*3)*1.2,1,1);drawSung(t);
   drawCaveDark(t);drawCat(t);
   if(WORLD==='west'){drawWallMass();if(WEST_DATA.barrier&&player.x+player.w/2>WEST_DATA.barrier.x)drawShaftMouth(t);}
@@ -6256,7 +6282,7 @@ const SCENES=[
   ['Cycle 1 · Torven greets',()=>{setCycle(1);openAll();placeAt(DOORG.x-280);}],
   ['Cycle 1 · Rite',()=>{setCycle(1);openAll();greeted();placeAt(CIRCLE.x-170);}],
   ['Cycle 1 · Take the light',()=>{setCycle(1);openAll();greeted();riteDone();placeAt(ALTAR.x-130);}],
-  ['Cycle 1 · Return bells',()=>{setCycle(1);openAll();greeted();riteDone();takeLight();placeAt(DOOR1.x-120,-1);}],
+  ['Cycle 1 · Exit bell (way home)',()=>{setCycle(1);openAll();greeted();riteDone();takeLight();placeAt(DOOR1.x-120,-1);}],
   ['Cycle 1 · Road home',()=>{setCycle(1);openAll();greeted();riteDone();homeward();placeAt(DOOR1W.x-220,-1);}],
   ['Cycle 1 · Home to father',()=>{setCycle(1);openAll();greeted();riteDone();homeward();placeAt(FATHER_X+180,-1);}],
   ['Cycle 2 · Outpost (start)',()=>{setCycle(2);placeAt(300);sendOff();}],
@@ -6315,7 +6341,7 @@ function toggleMute(){A.muted=!A.muted;muteBtn.textContent=A.muted?'Unmute':'Mut
 muteBtn.onclick=toggleMute;
 document.getElementById('vol').oninput=e=>{A.vol=+e.target.value;A.setLevel();savePrefs();};
 
-const BANK_EVENTS=[['voice.tone','Her voice (looped, pitched)'],['call.hum','Wall hum (pitched)'],['step','Footstep'],['drip','Cave drip (replaces the five recorded drips)'],['jump','Jump'],['land','Land'],['stone.strike','Stone strike (pitched)'],['stone.turn','Stone turn'],['relation.lit','Relation lit'],['threshold.open','Threshold opens'],['ritual.intone','Intone (looped, pitched)'],['ritual.choir','Order answers (pitched)'],['loop.return','Return'],['kreven.strike','Kreven strikes the staff into the ground (rite begins)'],['kreven.raise','Kreven raises the staff (light rising)'],['kreven.open','Kreven opens his arms (light falling; at rest now and then)'],['kreven.point','Kreven points the staff to the alcove (rite complete)']];
+const BANK_EVENTS=[['voice.tone','Her voice (looped, pitched)'],['call.hum','Wall hum (pitched)'],['step','Footstep'],['drip','Cave drip (replaces the five recorded drips)'],['jump','Jump'],['land','Land'],['stone.strike','Stone strike (pitched)'],['stone.turn','Stone turn'],['relation.lit','Relation lit'],['threshold.open','Threshold opens'],['ritual.intone','Intone (looped, pitched)'],['ritual.choir','Order answers (pitched)'],['loop.return','Return'],['exit.bell','The exit bell by the west door (opens it on the way home)'],['kreven.strike','Kreven strikes the staff into the ground (rite begins)'],['kreven.raise','Kreven raises the staff (light rising)'],['kreven.open','Kreven opens his arms (light falling; at rest now and then)'],['kreven.point','Kreven points the staff to the alcove (rite complete)']];
 document.getElementById('bankBody').innerHTML=BANK_EVENTS.map(([n,d])=>`<tr data-n="${n}"><td><code>${n}</code><div class="d">${d}</div></td><td class="st">synth</td><td style="white-space:nowrap"><label class="btn sm">Load<input type="file" accept="audio/*" hidden></label> <button class="btn sm" data-a="test" type="button">▶</button> <button class="btn sm" data-a="clear" type="button">×</button></td></tr>`).join('');
 document.getElementById('bankBody').addEventListener('change',async ev=>{
   const tr=ev.target.closest('tr'),f=ev.target.files&&ev.target.files[0];if(!tr||!f)return;ev.target.value='';
@@ -6363,7 +6389,7 @@ window.addEventListener('keydown',e=>{
   const k=KEYMAP[e.code];
   if(k){e.preventDefault();if(k==='jump'&&!keys.jump)jumpQueued=true;keys[k]=true;return;}
   if(e.code==='KeyE'){e.preventDefault();if(e.repeat)return;keys.e=true;
-    if(ritual.active)startIntone();else if(nearStone&&(!bellsOpen()||!bellAwake(nearStone.id)))strike(nearStone);else if(nearAltar())gather();else if(nearGroveBell())ringGroveBell('e');}
+    if(ritual.active)startIntone();else if(nearExitBell())ringExitBell();else if(nearStone&&(!bellsOpen()||!bellAwake(nearStone.id)))strike(nearStone);else if(nearAltar())gather();else if(nearGroveBell())ringGroveBell('e');}
   if(e.code==='KeyQ'&&!e.repeat&&nearStone){e.preventDefault();turn(nearStone);}
   const dg=/^(Digit|Numpad)([1-7])$/.exec(e.code);
   if(dg&&!e.repeat){e.preventDefault();const d=+dg[2]-1;A.voiceStart('k'+d,PENTA[d]);sing(d);}

@@ -377,94 +377,99 @@
  "P005": {
   "kind": "P",
   "who": "",
-  "text": "This bell is silent this cycle."
+  "text": "E strike the exit bell"
  },
  "P006": {
   "kind": "P",
   "who": "",
-  "text": "E strike · Q turn the bell"
+  "text": "This bell is silent this cycle."
  },
  "P007": {
   "kind": "P",
   "who": "",
-  "text": "E take the light"
+  "text": "E strike · Q turn the bell"
  },
  "P008": {
   "kind": "P",
   "who": "",
-  "text": "E strike the great bell"
+  "text": "E take the light"
  },
  "P009": {
   "kind": "P",
   "who": "",
-  "text": "Tell your father."
+  "text": "E strike the great bell"
  },
  "P010": {
   "kind": "P",
   "who": "",
-  "text": "Go back to the outpost and tell your father."
+  "text": "Tell your father."
  },
  "P011": {
   "kind": "P",
   "who": "",
-  "text": "Go west, through the door behind the outpost."
+  "text": "Go back to the outpost and tell your father."
  },
  "P012": {
   "kind": "P",
   "who": "",
-  "text": "Walk back into the hall, to the circle of light."
+  "text": "Go west, through the door behind the outpost."
  },
  "P013": {
   "kind": "P",
   "who": "",
-  "text": "Bring the light to your father."
+  "text": "Walk back into the hall, to the circle of light."
  },
  "P014": {
   "kind": "P",
   "who": "",
-  "text": "Carry the light home to the outpost."
+  "text": "Bring the light to your father."
  },
  "P015": {
   "kind": "P",
   "who": "",
-  "text": "Walk east, toward the Assembly."
+  "text": "Carry the light home to the outpost."
  },
  "P016": {
   "kind": "P",
   "who": "",
-  "text": "Space to jump · hold for height"
+  "text": "Walk east, toward the Assembly."
  },
  "P017": {
   "kind": "P",
   "who": "",
-  "text": "Keep the bells ringing."
+  "text": "Space to jump · hold for height"
  },
  "P018": {
   "kind": "P",
   "who": "",
-  "text": "The bells have turned. Ring them again, the other way round."
+  "text": "Keep the bells ringing."
  },
  "P019": {
   "kind": "P",
   "who": "",
-  "text": "Read the wall. Ring the bells so they answer one another."
+  "text": "The way out has shut. Strike the exit bell by the door."
  },
  "P020": {
   "kind": "P",
   "who": "",
-  "text": "The gate sings. Listen."
+  "text": "Read the wall. Ring the bells so they answer one another."
  },
  "P021": {
   "kind": "P",
   "who": "",
-  "text": "Answer the gate · keys 1–7"
+  "text": "The gate sings. Listen."
  },
  "P022": {
   "kind": "P",
   "who": "",
-  "text": "Step into the circle of light."
+  "text": "Answer the gate · keys 1–7"
  },
  "P023": {
+  "kind": "P",
+  "who": "",
+  "text": "Step into the circle of light."
+ },
+ "P024": {
   "kind": "P",
   "who": "",
   "text": "The alcove beyond is open."
@@ -492,6 +497,16 @@
  "C017": {
   "kind": "C",
   "who": "",
+  "text": "The door lifts."
+ },
+ "C018": {
+  "kind": "C",
+  "who": "",
   "text": "You know this road. There is no map for it."
+ },
+ "C019": {
+  "kind": "C",
+  "who": "",
+  "text": "Saved to a file."
  }
 }
