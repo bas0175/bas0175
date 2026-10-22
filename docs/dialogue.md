@@ -41,7 +41,7 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 
 [D021] Father: Tell Torven that I have thought long on his query, alas only the stone remains. Our stores are all but gone now. Go quickly, and bring back the light.
 
-### arrivalTalk
+### Cycle 3: arriving at the Assembly by the deep ways
 
 [D022] Torven: You came by the deep ways? No one has come that way in a generation.
 [D023] You: The cave on the East road has fallen in. And our stores are all but gone.
@@ -109,9 +109,7 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 [C014] The deep cave. The roof hangs low in places.
 [C015] Go back to the outpost.
 [C016] Go west, through the door behind the outpost.
-[C017] The door lifts.
-[C018] You know this road. There is no map for it.
-[C019] Saved to a file.
+[C017] You know this road. There is no map for it.
 
 ## Prompts (the bottom line while playing)
 
@@ -119,26 +117,25 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 [P002] The children sing the blessing.
 [P003] Stand in the light. The rite begins.
 [P004] Hold E as the light rises · release as it falls
-[P005] E strike the exit bell
-[P006] This bell is silent this cycle.
-[P007] E strike · Q turn the bell
-[P008] E take the light
-[P009] E strike the great bell
-[P010] Tell your father.
-[P011] Go back to the outpost and tell your father.
-[P012] Go west, through the door behind the outpost.
-[P013] Walk back into the hall, to the circle of light.
-[P014] Bring the light to your father.
-[P015] Carry the light home to the outpost.
-[P016] Walk east, toward the Assembly.
-[P017] Space to jump · hold for height
-[P018] Keep the bells ringing.
-[P019] The way out has shut. Strike the exit bell by the door.
-[P020] Read the wall. Ring the bells so they answer one another.
-[P021] The gate sings. Listen.
-[P022] Answer the gate · keys 1–7
-[P023] Step into the circle of light.
-[P024] The alcove beyond is open.
+[P005] This bell is silent this cycle.
+[P006] E strike · Q turn the bell
+[P007] E take the light
+[P008] E strike the great bell
+[P009] Tell your father.
+[P010] Go back to the outpost and tell your father.
+[P011] Go west, through the door behind the outpost.
+[P012] Walk back into the hall, to the circle of light.
+[P013] Bring the light to your father.
+[P014] Carry the light home to the outpost.
+[P015] Walk east, toward the Assembly.
+[P016] Space to jump · hold for height
+[P017] Keep the bells ringing.
+[P018] The bells have turned. Ring them again, the other way round.
+[P019] Read the wall. Ring the bells so they answer one another.
+[P020] The gate sings. Listen.
+[P021] Answer the gate · keys 1–7
+[P022] Step into the circle of light.
+[P023] The alcove beyond is open.
 
 ## Status (top right of the screen)
 
