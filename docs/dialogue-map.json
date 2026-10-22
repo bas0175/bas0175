@@ -197,6 +197,11 @@
  "C012": {
   "kind": "C",
   "who": "",
+  "text": "The gatekeeper sees the light you carry."
+ },
+ "C013": {
+  "kind": "C",
+  "who": "",
   "text": "Carry the light home. Far back on the road, a bell door has fallen shut."
  },
  "D029": {
@@ -289,12 +294,12 @@
   "who": "",
   "text": "The children sing the blessing."
  },
- "C013": {
+ "C014": {
   "kind": "C",
   "who": "",
   "text": "Morning. The road home is clear. Far back on it, a bell door has fallen shut."
  },
- "C014": {
+ "C015": {
   "kind": "C",
   "who": "",
   "text": "The deep cave. The roof hangs low in places."
@@ -309,7 +314,7 @@
   "who": "You",
   "text": "The road is shut. I have to tell my father."
  },
- "C015": {
+ "C016": {
   "kind": "C",
   "who": "",
   "text": "Go back to the outpost."
@@ -329,7 +334,7 @@
   "who": "Father",
   "text": "The stores will not last until someone clears that cave. Take this map. Find the Assembly, tell them what has happened, and bring back the light."
  },
- "C016": {
+ "C017": {
   "kind": "C",
   "who": "",
   "text": "Go west, through the door behind the outpost."
@@ -442,7 +447,7 @@
  "P018": {
   "kind": "P",
   "who": "",
-  "text": "The bells have turned. Ring them again, the other way round."
+  "text": "The gatekeeper will open the way."
  },
  "P019": {
   "kind": "P",
@@ -489,9 +494,14 @@
   "who": "",
   "text": "Carrying the map"
  },
- "C017": {
+ "C018": {
   "kind": "C",
   "who": "",
   "text": "You know this road. There is no map for it."
+ },
+ "C019": {
+  "kind": "C",
+  "who": "",
+  "text": "Saved to a file."
  }
 }

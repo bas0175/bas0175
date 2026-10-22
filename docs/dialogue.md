@@ -41,7 +41,7 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 
 [D021] Father: Tell Torven that I have thought long on his query, alas only the stone remains. Our stores are all but gone now. Go quickly, and bring back the light.
 
-### Cycle 3: arriving at the Assembly by the deep ways
+### arrivalTalk
 
 [D022] Torven: You came by the deep ways? No one has come that way in a generation.
 [D023] You: The cave on the East road has fallen in. And our stores are all but gone.
@@ -104,12 +104,14 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 [C009] Three falls. You begin the deep ways again from the foot of the long descent.
 [C010] Three falls. You wake where you took the light.
 [C011] Three falls. You begin again from the outpost.
-[C012] Carry the light home. Far back on the road, a bell door has fallen shut.
-[C013] Morning. The road home is clear. Far back on it, a bell door has fallen shut.
-[C014] The deep cave. The roof hangs low in places.
-[C015] Go back to the outpost.
-[C016] Go west, through the door behind the outpost.
-[C017] You know this road. There is no map for it.
+[C012] The gatekeeper sees the light you carry.
+[C013] Carry the light home. Far back on the road, a bell door has fallen shut.
+[C014] Morning. The road home is clear. Far back on it, a bell door has fallen shut.
+[C015] The deep cave. The roof hangs low in places.
+[C016] Go back to the outpost.
+[C017] Go west, through the door behind the outpost.
+[C018] You know this road. There is no map for it.
+[C019] Saved to a file.
 
 ## Prompts (the bottom line while playing)
 
@@ -130,7 +132,7 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 [P015] Walk east, toward the Assembly.
 [P016] Space to jump · hold for height
 [P017] Keep the bells ringing.
-[P018] The bells have turned. Ring them again, the other way round.
+[P018] The gatekeeper will open the way.
 [P019] Read the wall. Ring the bells so they answer one another.
 [P020] The gate sings. Listen.
 [P021] Answer the gate · keys 1–7

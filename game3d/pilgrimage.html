@@ -244,7 +244,8 @@ const SPACES={west:{rt:5.2,send:.5},outpost:{rt:2.4,send:.3},road:{rt:4.2,send:.
 const BX=3120+CV;   // the bell gate (the earlier threshold chamber) sits at the end of the long road
 const SLOTS=[{x:1270+BX,top:GROUND},{x:1490+BX,top:360},{x:1730+BX,top:300},{x:1990+BX,top:GROUND},{x:2150+BX,top:GROUND}];
 const DOOR1={x:2236+BX,y:200,w:28,h:240};    // bell gate, east door
-const DOOR1W={x:1150+BX,y:200,w:28,h:240};   // bell gate, west door: drops shut when she takes the light, so the bells must be rung again (in reverse) on the way home
+const DOOR1W={x:1150+BX,y:200,w:28,h:240};   // bell gate, west door: drops shut when she takes the light; on the way home a gatekeeper opens it for her
+const GUARD_X=1150+BX+28+34;   // where the gatekeeper stands on the way home, just inside the west door
 const DOORG={x:4500+RD,y:200,w:28,h:240};    // Assembly gate (check-in)
 const DOOR2={x:5660+RD,y:200,w:28,h:240};    // alcove
 const CIRCLE={x:5080+RD,r:78};
@@ -1094,6 +1095,7 @@ function buildFigures(){
   figs.push({x:CIRCLE.x+72,h:106,row:0,ph:.5,f:-1,kind:'dark',cast:'kreven',kreven:true});   // Kreven, who leads the rite
   figs.push({x:FATHER_X,h:100,row:0,ph:0,f:-1,kind:'dark',name:'order.dark.elder',father:true,cast:'x13'});      // her father, keeper of the outpost
   figs.push({x:120,h:96,row:1,ph:2,f:1,kind:'pale',cast:'x09'});        // outpost folk
+  figs.push({x:GUARD_X,h:104,row:0,ph:1,f:1,kind:'dark',cast:'x04',guard:true});   // the gatekeeper at the bell door on the way home (placeholder art)
   figs.push({x:4150+RD,h:104,row:0,ph:2,f:1,kind:'dark',name:'order.dark.lappet',cast:'x04'},{x:4440+RD,h:104,row:0,ph:5,f:-1,kind:'dark',name:'order.dark.lappet',cast:'x10'});  // gatekeepers
   if(WORLD!=='east'){figs=[];return;}
   figs.push({x:torvenX(),h:100,row:0,ph:1.2,f:-1,kind:'pale',torven:true});   // Torven, the community's administrator
@@ -1325,6 +1327,18 @@ function restartJourney(){
     camX=clamp(player.x+12-W*.42,0,WORLD_W-W);$('fade').classList.remove('on');state.mode='play';},1300);
 }
 function caption(text,dur=7){state.caption=text;state.captionUntil=nowS()+dur;}
+/* The gatekeeper (way home): when she takes the light the west bell door drops shut; a gatekeeper stands just inside it.
+   As she comes near he faces her, then turns to the door and it lifts, so she does not solve the bells again.
+   (Placeholder art: an Assembly gatekeeper; the guard's own frames will replace it.) */
+const guard={opening:false,at:0};
+function updateGuard(){
+  if(WORLD!=='east'||!state.returnBells||state.door1WOpen){guard.opening=false;return;}
+  const g=figs.find(f=>f.guard);if(!g)return;const d=player.x+player.w/2-g.x,t=nowS();
+  g.f=d>0?1:-1;
+  if(!guard.opening&&Math.abs(d)<170){guard.opening=true;guard.at=t;log('guard.greet',{x:Math.round(g.x)},'world');caption('The gatekeeper sees the light you carry.',3);}
+  if(guard.opening){if(t-guard.at>1.1)g.f=-1;   // he turns to the door
+    if(t-guard.at>1.6){state.door1WOpen=true;guard.opening=false;A.fire('threshold.open',{x:DOOR1W.x,via:'gatekeeper'},'world');}}
+}
 function nearAltar(){return WORLD==='east'&&ritual.done&&state.door2Open&&!state.gathered&&Math.abs(player.x+player.w/2-ALTAR.x)<66;}
 function closeReturnBells(){state.returnBells=true;state.door1WOpen=false;phrase=null;stones.forEach(s=>{s.idx=s.start;s.last=-1e9;});renderRelations();}
 function gather(){state.carrying=true;state.gathered=true;A.fire('item.gather',{x:ALTAR.x},'world');closeReturnBells();A.fire('door.close',{x:DOOR1W.x},'world');
@@ -1458,7 +1472,7 @@ function update(dt){
       {who:'Father',text:'Then there is only the old road, west, through the deep ways. It is long, treacherous, and no one from here has walked it in years.'},
       {who:'Father',text:'The stores will not last until someone clears that cave. Take this map. Find the Assembly, tell them what has happened, and bring back the light.'}],
       ()=>{caption('Go west, through the door behind the outpost.',7);log('story.map',{},'world');});return;}
-  updateTorven(dt);
+  updateTorven(dt);updateGuard();
   if(state.arrivalTalk){const g=torvenFig();if(g&&!g.walking&&Math.abs(player.x+player.w/2-g.x)<110&&(g.greeted||Math.abs(player.x+player.w/2-g.x)<70)){state.arrivalTalk=false;arrivalTalk();return;}}
   if(state.gateOpen&&Math.abs(player.x+player.w/2-torvenPos())<70){const key=state.carrying?'home':'out';
     if(!state.talked[key]){state.talked[key]=1;openDialog(torvenLines(key));log('dialog.torven',{leg:key},'world');return;}}
@@ -1487,7 +1501,7 @@ function setHint(t){
   else if(state.carrying)h=z==='outpost'?'Bring the light to your father.':'Carry the light home to the outpost.';
   else if(z==='outpost')h=state.delivered>=state.loop?'':'Walk east, toward the Assembly.';
   else if((z==='road'||z==='road2')&&t-state.loopT0<40&&!state.carrying)h='Space to jump · hold for height';
-  else if(z==='bells'&&!bellsOpen())h=phrase?'Keep the bells ringing.':state.returnBells?'The bells have turned. Ring them again, the other way round.':'Read the wall. Ring the bells so they answer one another.';
+  else if(z==='bells'&&!bellsOpen())h=phrase?'Keep the bells ringing.':state.returnBells?'The gatekeeper will open the way.':'Read the wall. Ring the bells so they answer one another.';
   else if(z==='gate'&&!state.gateOpen)h=call.state==='calling'?'The gate sings. Listen.':'Answer the gate · keys 1–7';
   else if(z==='hall'&&!ritual.done)h='Step into the circle of light.';
   else if(z==='hall'&&ritual.done)h='The alcove beyond is open.';
@@ -1704,6 +1718,7 @@ function drawTorven(g,x,t){
 function drawFigures(t){
   const glow=state.zone==='hall'&&ritual.active?ritual.light:0;
   for(const g of figs){const x=g.x-camX;if(x<-60||x>W+60)continue;
+    if(g.guard&&!state.returnBells&&!guard.opening)continue;   // he is only there on the way home
     if(g.torven&&drawTorven(g,x,t))continue;
     if(g.cast&&drawCast(g,x,t))continue;
     const kind=g.kind||'dark',name=g.name||(kind==='pale'?'order.pale':['order.dark.clasped','order.dark.raised','order.dark.lappet','order.dark.clasped','order.dark.elder','order.dark.raised'][Math.floor(g.ph)%6]);
@@ -1897,7 +1912,7 @@ const SCENES=[
   ['Cycle 1 · Torven greets',()=>{setCycle(1);openAll();placeAt(DOORG.x-280);}],
   ['Cycle 1 · Rite',()=>{setCycle(1);openAll();greeted();placeAt(CIRCLE.x-170);}],
   ['Cycle 1 · Take the light',()=>{setCycle(1);openAll();greeted();riteDone();placeAt(ALTAR.x-130);}],
-  ['Cycle 1 · Return bells',()=>{setCycle(1);openAll();greeted();riteDone();takeLight();placeAt(DOOR1.x-120,-1);}],
+  ['Cycle 1 · Gatekeeper (way home)',()=>{setCycle(1);openAll();greeted();riteDone();takeLight();placeAt(DOOR1.x-120,-1);}],
   ['Cycle 1 · Road home',()=>{setCycle(1);openAll();greeted();riteDone();homeward();placeAt(DOOR1W.x-220,-1);}],
   ['Cycle 1 · Home to father',()=>{setCycle(1);openAll();greeted();riteDone();homeward();placeAt(FATHER_X+180,-1);}],
   ['Cycle 2 · Outpost (start)',()=>{setCycle(2);placeAt(300);sendOff();}],
