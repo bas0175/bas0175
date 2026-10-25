@@ -51,45 +51,49 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 [D027] Torven: We will send a party to clear your road, and another to that chamber. Stores will go back with you.
 [D028] Torven: Take your place in the rite. After today, everyone here will know your name.
 
+### updateGuard
+
+[D029] (no speaker): The gatekeeper sees the light you carry.
+
 ### Dinner at Torven's house (parked: not in the game until DINNER_ON is set)
 
-[D029] Torven: Veyra. The party will not have your road open before morning.
-[D030] Torven: Eat with us tonight. Mira will not forgive me if I let you sleep on the hall floor.
+[D030] Torven: Veyra. The party will not have your road open before morning.
+[D031] Torven: Eat with us tonight. Mira will not forgive me if I let you sleep on the hall floor.
 
-[D031] Mira: Sit, sit. Torven says you walked the deep ways alone.
-[D032] You: Most of the way. Some passages ended in stone, and I had to turn back.
-[D033] Nessa: Were there creatures?
-[D034] You: A few. They mostly wanted the light.
-[D035] Torven: Before we eat, the children sing the blessing. The guest answers it.
-[D036] Lio: You have to sing it back. Exactly.
+[D032] Mira: Sit, sit. Torven says you walked the deep ways alone.
+[D033] You: Most of the way. Some passages ended in stone, and I had to turn back.
+[D034] Nessa: Were there creatures?
+[D035] You: A few. They mostly wanted the light.
+[D036] Torven: Before we eat, the children sing the blessing. The guest answers it.
+[D037] Lio: You have to sing it back. Exactly.
 
-[D037] Lio: She got it!
-[D038] Torven: We cooked what you carried up from the chamber. Everyone at this table should taste what saved them.
-[D039] Nessa: It glows a little.
-[D040] Mira: Eat it anyway.
-[D041] Mira: Your father must miss you.
-[D042] You: He keeps the outpost alone now. I will be home tomorrow.
-[D043] Torven: Tomorrow, then. Rest here tonight. The road will be clear by morning.
+[D038] Lio: She got it!
+[D039] Torven: We cooked what you carried up from the chamber. Everyone at this table should taste what saved them.
+[D040] Nessa: It glows a little.
+[D041] Mira: Eat it anyway.
+[D042] Mira: Your father must miss you.
+[D043] You: He keeps the outpost alone now. I will be home tomorrow.
+[D044] Torven: Tomorrow, then. Rest here tonight. The road will be clear by morning.
 
-[D044] Torven: Close enough. They will teach it to you properly next time.
+[D045] Torven: Close enough. They will teach it to you properly next time.
 
 ### The road and the outpost: the cave-in (cycle 3), her father gives the map, bringing the light home (cycle 2 / with stores / cycle 1)
 
-[D045] (no speaker): The roof of the cave has come down. Broken stone fills the way.
-[D046] You: The road is shut. I have to tell my father.
+[D046] (no speaker): The roof of the cave has come down. Broken stone fills the way.
+[D047] You: The road is shut. I have to tell my father.
 
-[D047] You: The cave has fallen in. The road to the Assembly is shut.
-[D048] Father: Then there is only the old road, west, through the deep ways. It is long, treacherous, and no one from here has walked it in years.
-[D049] Father: The stores will not last until someone clears that cave. Take this map. Find the Assembly, tell them what has happened, and bring back the light.
+[D048] You: The cave has fallen in. The road to the Assembly is shut.
+[D049] Father: Then there is only the old road, west, through the deep ways. It is long, treacherous, and no one from here has walked it in years.
+[D050] Father: The stores will not last until someone clears that cave. Take this map. Find the Assembly, tell them what has happened, and bring back the light.
 
-[D050] You: Torven asks for your counsel. He says the whole community is struggling for food.
-[D051] Father: Then it is not only us.
-[D052] Father: Rest now. I will think on what to tell him.
+[D051] You: Torven asks for your counsel. He says the whole community is struggling for food.
+[D052] Father: Then it is not only us.
+[D053] Father: Rest now. I will think on what to tell him.
 
-[D053] Father: You came back. And with stores.
-[D054] Father: Rest now. The light is home, and so are you.
+[D054] Father: You came back. And with stores.
+[D055] Father: Rest now. The light is home, and so are you.
 
-[D055] Father: You have brought the light home.
+[D056] Father: You have brought the light home.
 
 ## Captions (the line under the screen at story moments)
 
@@ -104,14 +108,13 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 [C009] Three falls. You begin the deep ways again from the foot of the long descent.
 [C010] Three falls. You wake where you took the light.
 [C011] Three falls. You begin again from the outpost.
-[C012] The gatekeeper sees the light you carry.
-[C013] Carry the light home. Far back on the road, a bell door has fallen shut.
-[C014] Morning. The road home is clear. Far back on it, a bell door has fallen shut.
-[C015] The deep cave. The roof hangs low in places.
-[C016] Go back to the outpost.
-[C017] Go west, through the door behind the outpost.
-[C018] You know this road. There is no map for it.
-[C019] Saved to a file.
+[C012] Carry the light home. Far back on the road, a bell door has fallen shut.
+[C013] Morning. The road home is clear. Far back on it, a bell door has fallen shut.
+[C014] The deep cave. The roof hangs low in places.
+[C015] Go back to the outpost.
+[C016] Go west, through the door behind the outpost.
+[C017] You know this road. There is no map for it.
+[C018] Saved to a file.
 
 ## Prompts (the bottom line while playing)
 

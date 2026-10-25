@@ -1344,7 +1344,7 @@ function updateGuard(){
   const g=WORLD==='east'&&figs.find(f=>f.guard);if(!g)return;const d=player.x+player.w/2-g.x,t=nowS();
   if(Math.abs(d)>4)g.f=d>0?1:-1;   // he always faces her
   if(!state.returnBells||state.door1WOpen){guard.opening=false;return;}
-  if(!guard.opening&&Math.abs(d)<170){guard.opening=true;guard.at=t;log('guard.greet',{x:Math.round(g.x)},'world');caption('The gatekeeper sees the light you carry.',3);}
+  if(!guard.opening&&Math.abs(d)<170){guard.opening=true;guard.at=t;log('guard.greet',{x:Math.round(g.x)},'world');openDialog([{who:'',text:'The gatekeeper sees the light you carry.'}]);}
   if(guard.opening){
     if(t-guard.at>1.6){state.door1WOpen=true;guard.opening=false;A.fire('threshold.open',{x:DOOR1W.x,via:'gatekeeper'},'world');}}
 }
