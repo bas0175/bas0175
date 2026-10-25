@@ -1500,7 +1500,7 @@ function setHint(t){
   if(ritual.active)h=t<ritual.t0?'Stand in the light. The rite begins.':'Hold E as the light rises · release as it falls';
   else if(t<state.captionUntil)h=state.caption;
   else if(nearStone&&!bellAwake(nearStone.id))h='This bell is silent this cycle.';
-  else if(nearStone&&!bellsOpen())h='E strike · Q turn the bell';
+  else if(nearStone&&!bellsOpen()&&!state.returnBells)h='E strike · Q turn the bell';
   else if(nearAltar())h='E take the light';
   else if(nearGroveBell())h='E strike the great bell';
   else if(WORLD==='west')h='';
@@ -1516,7 +1516,7 @@ function setHint(t){
   else if(z==='hall'&&ritual.done)h='The alcove beyond is open.';
   if(h!==state.hint){state.hint=h;document.getElementById('hint').textContent=h;}
   const pl=z==='gate'?(state.gateOpen?'Answered':`Phrase ${Math.min(call.ci+1,call.chunks.length)}/${call.chunks.length} · ${call.state==='calling'?'listening':call.state==='listening'?'answer '+call.pos+'/'+call.chunks[call.ci].notes.length:'waiting'}`)
-    :z==='bells'?(bellsOpen()?'Bell gate open':phrase?`Ringing · ${phrase.sat.size}/${bellEdges().length} relations`:'Silence'):(state.carrying?(state.stores?'Carrying the light and stores':'Carrying the light'):state.story.mapGiven&&!state.story.arrived?'Carrying the map':'');
+    :z==='bells'&&!state.returnBells?(bellsOpen()?'Bell gate open':phrase?`Ringing · ${phrase.sat.size}/${bellEdges().length} relations`:'Silence'):(state.carrying?(state.stores?'Carrying the light and stores':'Carrying the light'):state.story.mapGiven&&!state.story.arrived?'Carrying the map':'');
   const hp=document.getElementById('hudPhrase');if(hp.textContent!==pl)hp.textContent=pl;
 }
 function updateHud(){document.getElementById('hudLoop').textContent=state.loop;document.getElementById('hudZone').textContent=zoneName(state.zone);}
@@ -1587,6 +1587,7 @@ function drawLoopMarks(){
     ctx.fillRect(x0+i*12,262,3,24);ctx.shadowBlur=0;}
 }
 function drawPanel(t){
+  if(state.returnBells)return;   // the guide is for the way out; on the way home the gatekeeper opens the door
   if(1180+BX-camX>W||2190+BX-camX<0)return;
   const gy=208;
   stones.forEach(s=>{const x=s.x-camX,a=amp(s,t);ctx.strokeStyle=a>AUDIBLE?mix('#5b7384','#eef5f8',Math.min(1,a)):'#4a6070';ctx.lineWidth=1.6;
