@@ -51,7 +51,7 @@ To add, remove or move a line, write a note next to it in [square brackets] and 
 [D027] Torven: We will send a party to clear your road, and another to that chamber. Stores will go back with you.
 [D028] Torven: Take your place in the rite. After today, everyone here will know your name.
 
-### caption
+### The bell gate on the way home: the gatekeeper (cycle 1 / cycle 2 / cycle 3)
 
 [D029] Gatekeeper: You carry the Assembly's light. The way home is open to you.
 [D030] You: Thank you.

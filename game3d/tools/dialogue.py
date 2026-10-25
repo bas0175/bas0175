@@ -15,11 +15,12 @@ LABEL = {
   'arriveFromWest': 'Cycle 3: arriving at the Assembly by the deep ways',
   'update': 'The road and the outpost: the cave-in (cycle 3), her father gives the map, bringing the light home (cycle 2 / with stores / cycle 1)',
   'updateGrove': 'The deep ways: the glowing chamber',
+  'GATE_LINES': 'The bell gate on the way home: the gatekeeper (cycle 1 / cycle 2 / cycle 3)',
   'DINNER': "Dinner at Torven's house (parked: not in the game until DINNER_ON is set)",
 }
 def func_at(src, pos):
     m = None
-    for m2 in re.finditer(r"\nfunction (\w+)\(|\nconst (DINNER)=", src[:pos]): m = m2
+    for m2 in re.finditer(r"\nfunction (\w+)\(|\nconst (DINNER|GATE_LINES)=", src[:pos]): m = m2
     return (m.group(1) or m.group(2)) if m else '?'
 def scan(src):
     out = []
