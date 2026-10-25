@@ -196,90 +196,105 @@
  },
  "D029": {
   "kind": "D",
-  "who": "",
-  "text": "The gatekeeper sees the light you carry."
+  "who": "Gatekeeper",
+  "text": "You carry the Assembly's light. The way home is open to you."
+ },
+ "D030": {
+  "kind": "D",
+  "who": "You",
+  "text": "Thank you."
+ },
+ "D031": {
+  "kind": "D",
+  "who": "Gatekeeper",
+  "text": "Back again, and the light with you. Go carefully."
+ },
+ "D032": {
+  "kind": "D",
+  "who": "Gatekeeper",
+  "text": "They say you came by the deep ways. Go on home. The road is clear now."
  },
  "C012": {
   "kind": "C",
   "who": "",
   "text": "Carry the light home. Far back on the road, a bell door has fallen shut."
  },
- "D030": {
+ "D033": {
   "kind": "D",
   "who": "Torven",
   "text": "Veyra. The party will not have your road open before morning."
  },
- "D031": {
+ "D034": {
   "kind": "D",
   "who": "Torven",
   "text": "Eat with us tonight. Mira will not forgive me if I let you sleep on the hall floor."
  },
- "D032": {
+ "D035": {
   "kind": "D",
   "who": "Mira",
   "text": "Sit, sit. Torven says you walked the deep ways alone."
  },
- "D033": {
+ "D036": {
   "kind": "D",
   "who": "You",
   "text": "Most of the way. Some passages ended in stone, and I had to turn back."
  },
- "D034": {
+ "D037": {
   "kind": "D",
   "who": "Nessa",
   "text": "Were there creatures?"
  },
- "D035": {
+ "D038": {
   "kind": "D",
   "who": "You",
   "text": "A few. They mostly wanted the light."
  },
- "D036": {
+ "D039": {
   "kind": "D",
   "who": "Torven",
   "text": "Before we eat, the children sing the blessing. The guest answers it."
  },
- "D037": {
+ "D040": {
   "kind": "D",
   "who": "Lio",
   "text": "You have to sing it back. Exactly."
  },
- "D038": {
+ "D041": {
   "kind": "D",
   "who": "Lio",
   "text": "She got it!"
  },
- "D039": {
+ "D042": {
   "kind": "D",
   "who": "Torven",
   "text": "We cooked what you carried up from the chamber. Everyone at this table should taste what saved them."
  },
- "D040": {
+ "D043": {
   "kind": "D",
   "who": "Nessa",
   "text": "It glows a little."
  },
- "D041": {
+ "D044": {
   "kind": "D",
   "who": "Mira",
   "text": "Eat it anyway."
  },
- "D042": {
+ "D045": {
   "kind": "D",
   "who": "Mira",
   "text": "Your father must miss you."
  },
- "D043": {
+ "D046": {
   "kind": "D",
   "who": "You",
   "text": "He keeps the outpost alone now. I will be home tomorrow."
  },
- "D044": {
+ "D047": {
   "kind": "D",
   "who": "Torven",
   "text": "Tomorrow, then. Rest here tonight. The road will be clear by morning."
  },
- "D045": {
+ "D048": {
   "kind": "D",
   "who": "Torven",
   "text": "Close enough. They will teach it to you properly next time."
@@ -304,12 +319,12 @@
   "who": "",
   "text": "The deep cave. The roof hangs low in places."
  },
- "D046": {
+ "D049": {
   "kind": "D",
   "who": "",
   "text": "The roof of the cave has come down. Broken stone fills the way."
  },
- "D047": {
+ "D050": {
   "kind": "D",
   "who": "You",
   "text": "The road is shut. I have to tell my father."
@@ -319,17 +334,17 @@
   "who": "",
   "text": "Go back to the outpost."
  },
- "D048": {
+ "D051": {
   "kind": "D",
   "who": "You",
   "text": "The cave has fallen in. The road to the Assembly is shut."
  },
- "D049": {
+ "D052": {
   "kind": "D",
   "who": "Father",
   "text": "Then there is only the old road, west, through the deep ways. It is long, treacherous, and no one from here has walked it in years."
  },
- "D050": {
+ "D053": {
   "kind": "D",
   "who": "Father",
   "text": "The stores will not last until someone clears that cave. Take this map. Find the Assembly, tell them what has happened, and bring back the light."
@@ -339,32 +354,32 @@
   "who": "",
   "text": "Go west, through the door behind the outpost."
  },
- "D051": {
+ "D054": {
   "kind": "D",
   "who": "You",
   "text": "Torven asks for your counsel. He says the whole community is struggling for food."
  },
- "D052": {
+ "D055": {
   "kind": "D",
   "who": "Father",
   "text": "Then it is not only us."
  },
- "D053": {
+ "D056": {
   "kind": "D",
   "who": "Father",
   "text": "Rest now. I will think on what to tell him."
  },
- "D054": {
+ "D057": {
   "kind": "D",
   "who": "Father",
   "text": "You came back. And with stores."
  },
- "D055": {
+ "D058": {
   "kind": "D",
   "who": "Father",
   "text": "Rest now. The light is home, and so are you."
  },
- "D056": {
+ "D059": {
   "kind": "D",
   "who": "Father",
   "text": "You have brought the light home."
